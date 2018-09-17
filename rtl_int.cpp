@@ -1,3 +1,4 @@
+#include <rtl_int.h>
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -6,14 +7,25 @@
 
 std::vector<std::string> list_of_file_names;
 
+/***
+ *      ______                       _      _ _     
+ *     |  ____|                     | |    (_) |    
+ *     | |__   _ __ _ __ ___  _ __  | |     _| |__  
+ *     |  __| | '__| '__/ _ \| '__| | |    | | '_ \ 
+ *     | |____| |  | | | (_) | |    | |____| | |_) |
+ *     |______|_|  |_|  \___/|_|    |______|_|_.__/ 
+ *                                                  
+ *                                                  
+ */
+
 #define oassert(condition) { \
 	if(!(condition)) { \
 		std::clog << "ASSERT FAILED: " << #condition << " \n\t@" << __FILE__<< "::" << __LINE__ << std::endl; std::abort(); \
 } 	}
 
 /*---------------------------------------------------------------------------------------------
- * (function: error_message)
- *-------------------------------------------------------------------------------------------*/
+* (function: error_message)
+*-------------------------------------------------------------------------------------------*/
 static void error_message(int line_number, int file, const char *message, ...)
 {
 	va_list ap;
@@ -41,8 +53,8 @@ static void error_message(int line_number, int file, const char *message, ...)
 }
 
 /*---------------------------------------------------------------------------------------------
- * (function: warning_message)
- *-------------------------------------------------------------------------------------------*/
+* (function: warning_message)
+*-------------------------------------------------------------------------------------------*/
 static void warning_message(int line_number, int file, const char *message, ...)
 {
 	va_list ap;
@@ -68,9 +80,47 @@ static void warning_message(int line_number, int file, const char *message, ...)
 	std::clog << "\n";
 }
 
+
+/***
+ *      _____       _ _   
+ *     |_   _|     (_) |  
+ *       | |  _ __  _| |_ 
+ *       | | | '_ \| | __|
+ *      _| |_| | | | | |_ 
+ *     |_____|_| |_|_|\__|
+ *                        
+ *                        
+ */
+
+void init_number(const char* orig_number, short radix, int num_bits)
+{
+	original_number = orig_number;
+	binary_limit = num_bits;
+	binary_number = to_bitstring(orig_number, radix, num_bits);
+	is_full=0;
+}
+
+void init_number(const char* orig_number, short radix)
+{
+
+}
+
+void init_number(const char* orig_number)
+{
+
+}
+
+
 /*******************************************************
- * Primitive Gate Evaluators
- *  * these are taken from the raw verilog truth tables so that the evaluation are correct.
+ *      _____      _           _ _   _             ______          _ 
+ *     |  __ \    (_)         (_) | (_)           |  ____|        | |
+ *     | |__) | __ _ _ __ ___  _| |_ ___   _____  | |____   ____ _| |
+ *     |  ___/ '__| | '_ ` _ \| | __| \ \ / / _ \ |  __\ \ / / _` | |
+ *     | |   | |  | | | | | | | | |_| |\ V /  __/ | |___\ V / (_| | |
+ *     |_|   |_|  |_|_| |_| |_|_|\__|_| \_/ \___| |______\_/ \__,_|_|
+ *                                                                   
+ *                                                                  
+ * these are taken from the raw verilog truth tables so that the evaluation are correct.
  * only use this to evaluate any expression for the number_t binary digits.
  * reference: http://staff.ustc.edu.cn/~songch/download/IEEE.1364-2005.pdf
  *******************************************************/ 
@@ -292,6 +342,17 @@ unsigned long long v_strtoull(std::string orig_number, int radix)
 
 	return std::strtoull(orig_number.c_str(), NULL, radix);
 }
+
+/***
+ *                    _ _   _                    _   _      
+ *         /\        (_) | | |                  | | (_)     
+ *        /  \   _ __ _| |_| |__  _ __ ___   ___| |_ _  ___ 
+ *       / /\ \ | '__| | __| '_ \| '_ ` _ \ / _ \ __| |/ __|
+ *      / ____ \| |  | | |_| | | | | | | | |  __/ |_| | (__ 
+ *     /_/    \_\_|  |_|\__|_| |_|_| |_| |_|\___|\__|_|\___|
+ *                                                          
+ *                                                          
+ */
 
 /*---------------------------------------------------------------------------------------------
  * define Verilog unary operations
