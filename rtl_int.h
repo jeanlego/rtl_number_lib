@@ -17,7 +17,6 @@ public:
 
     }
 
-    // Depending on the signs of LHS and RHS, either addition or subtraction is required.
     rtl_int & rtl_int::operator+=(const rtl_int & that)
     {
         if (isPositive && that.isPositive) 
@@ -50,7 +49,6 @@ public:
         return rtl_int(*this) += that;
     }
 
-    // subtraction operators are defined as LHS - RHS = LHS + (-1 * RHS)
     rtl_int & operator-=(const rtl_int & that)
     {
         rtl_int placeholder(that);
@@ -63,8 +61,6 @@ public:
         return rtl_int(*this) -= that;
     }
 
-
-    // Equality check, first check for same amount of slots. If that differs, numbers can't be equal. Second checks for signs, then checks if all slots themselves have equal value.
     bool operator==(const rtl_int & that) const
     {
         if (this->numberOfSlots != that.numberOfSlots)
