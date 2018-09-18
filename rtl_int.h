@@ -1,139 +1,198 @@
-struct slot;
+#include <string>
 
 class rtl_int
 {
 
-public:
+private:
+    int binary_limit;
+    bool signed_int;
+    std::string binary_number;
+    std::string original_number;
 
-    rtl_int();
+ public:   
+    //make duplicates
     rtl_int(const rtl_int & that);
-    rtl_int(int value);
-    rtl_int(const char string[]);
-    ~rtl_int();
+    // preparsed input
+    rtl_int(std::string orig_number, bool signed_int, int num_bits);
+    // verilog type input
+    rtl_int(std::string orig_number);
+    // numeral type input
+    rtl_int(unsigned long long, int num_bits);
+    rtl_int(long long, int num_bits);
 
+    /*** allowable operator overloading
+     * 
+     *
+     
 
-    rtl_int & operator=(const rtl_int & that)
-    {
+    Arithmetic
+        + (addition)
+        - (subtraction)
+        * (multiplication)
+        / (division)
+        % (modulus)
 
-    }
+    Bitwise
+        ^ (XOR)
+        | (OR)
+        & (AND)
+        ~ (Complement)
+        << (Shift Left, Insertion to Stream)
+        >> (Shift Right, Extraction from Stream)
 
-    rtl_int & rtl_int::operator+=(const rtl_int & that)
-    {
-        if (isPositive && that.isPositive) 
-        {
-            add(that);
-        } 
-        else if (isPositive && !that.isPositive)
-        {
-            rtl_int placeholder(that);
-            placeholder.isPositive = true;
-            subtract(placeholder);
-        }
-        else if (!isPositive && that.isPositive)
-        {
-            rtl_int placeholder(that);
-            placeholder.subtract(*this);
-            copy(placeholder);
-        }
-        else
-        {
-            add(that);
-            isPositive = false;
-        }
+    Assignment
+        = (Assignment)
 
-        return *this;
-    }
+    Relational
+        == (Equality)
+        != (Inequality)
+        > (Greater-Than)
+        < (Less-Than)
+        >= (Greater-Than Or Equal-To)
+        <= (Less-Than Or Equal-To)
 
-    rtl_int operator+(const rtl_int & that) const
-    {
-        return rtl_int(*this) += that;
-    }
+    Logical
+        ! (NOT)
+        && (AND)
+        || (OR)
 
-    rtl_int & operator-=(const rtl_int & that)
-    {
-        rtl_int placeholder(that);
-        placeholder.isPositive = !placeholder.isPositive;
-        return *this += placeholder;
-    }
+    Compound Assignment
+        += (Addition-Assignment)
+        -= (Subtraction-Assignment)
+        *= (Multiplication-Assignment)
+        /= (Division-Assignment)
+        %= (Modulus-Assignment)
+        &= (AND-Assignment)
+        |= (OR-Assignment)
+        ^= (XOR-Assignment)
+        <<= (Shift-Left Assignment)
+        >>= (Shift-Right Assignment)
 
-    rtl_int operator-(const rtl_int & that) const
-    {
-        return rtl_int(*this) -= that;
-    }
+    Increment - Decrement - Both have 2 forms (prefix) and (postfix)
+        ++ (Increment)
+        -- (Decrement)
 
-    bool operator==(const rtl_int & that) const
-    {
-        if (this->numberOfSlots != that.numberOfSlots)
-        {
-            return false;
-        }
-        if (isPositive != that.isPositive)
-        {
-            return false;
-        }
+    Subscript
+        [] (Subscript)
 
-        return true;
-    }
+    Function Call
+        () (Function Call)
 
-    explicit operator bool() const
-    {
-        return *this != 0;
-    }
+    Address, Reference, Pointer
+        operator&()
+        operator*()
+        operator->()
 
-    bool operator!() const
-    {
-        return !bool(*this);
-    }
+    Comma
+        operator,()
+
+    Member Reference
+        operator->()
+        operator->*()
+
+    Memory Management
+        new
+        delete
+        new[]
+        delete[]
+
+    Conversion
+        operator "type" () const
+
+    NON Modifiable Operators - Operators that can not be overloaded
+        ?: (Conditional - Ternary)
+        . (Member Selection)
+        .* (Member Selection With Pointer To Member)
+        :: (Scope Resolution)
+        sizeof() (Object Size Information)
+        typeid() (Object Type Information)
+
+     *  
+     */
+
+    rtl_int operator    ~   () const ;
+    rtl_int operator    &   () const ;
+    rtl_int operator    |   () const ;
+    rtl_int operator    ^   () const ;
+    rtl_int operator    ~&  () const ;
+
+    // rtl_int & operator=(const rtl_int & that);
+
+    // rtl_int & rtl_int::operator+=(const rtl_int & that)
+    // {
+    //     if (isPositive && that.isPositive) 
+    //     {
+    //         add(that);
+    //     } 
+    //     else if (isPositive && !that.isPositive)
+    //     {
+    //         rtl_int placeholder(that);
+    //         placeholder.isPositive = true;
+    //         subtract(placeholder);
+    //     }
+    //     else if (!isPositive && that.isPositive)
+    //     {
+    //         rtl_int placeholder(that);
+    //         placeholder.subtract(*this);
+    //         copy(placeholder);
+    //     }
+    //     else
+    //     {
+    //         add(that);
+    //         isPositive = false;
+    //     }
+
+    //     return *this;
+    // }
+
+    // rtl_int operator+(const rtl_int & that) const
+    // {  
+    //     return rtl_int(*this) += that;
+    // }
+
+    // rtl_int & operator-=(const rtl_int & that)
+    // {
+    //     rtl_int placeholder(that);
+    //     placeholder.isPositive = !placeholder.isPositive;
+    //     return *this += placeholder;
+    // }
+
+    // rtl_int operator-(const rtl_int & that) const
+    // {
+    //     return rtl_int(*this) -= that;
+    // }
+
+    // bool operator==(const rtl_int & that) const
+    // {
+    //     if (this->numberOfSlots != that.numberOfSlots)
+    //     {
+    //         return false;
+    //     }
+    //     if (isPositive != that.isPositive)
+    //     {
+    //         return false;
+    //     }
+
+    //     return true;
+    // }
+
+    // explicit operator bool() const
+    // {
+    //     return *this != 0;
+    // }
+
+    // bool operator!() const
+    // {
+    //     return !bool(*this);
+    // }
 
     friend std::ostream & operator<<(std::ostream & os, const rtl_int & obj)
     {
         if (obj != nullptr)
         {
+            return std::string("\'b" + obj.binary_number);
             os.put(obj.binary_number);
         }
         return os;
     }
-
-private:
-
-    int binary_limit;
-    std::string original_number;
-    std::string binary_number;
-
-
-    void init_number(const char* orig_number, short radix, int num_bits);
-    void init_number(const char* orig_number, short radix);
-    void init_number(const char* orig_number);
-
-    /*---------------------------------------------------------------------------------------------
-    * (function: twos_complement)
-    * Changes a bit string to its twos complement value
-    *-------------------------------------------------------------------------------------------*/
-    char *twos_complement(char *str);
-
-    /******************************************************************
-     *  convert to unsigned long long a number input and truncate to size
-     * input
-     *****************************************************************/
-    unsigned long long odin_strtoull(unsigned long long orig_number, int num_bits);
-    unsigned long long odin_strtoull(const char *orig_number, short radix, int num_bits);
-    unsigned long long odin_strtoull(const char *orig_number, short radix);
-
-    /*******************************************************************
-     *  convert to bitstring a number input and truncate to size
-     * input
-     *******************************************************************/
-    const char *to_bitstring(unsigned long long number);
-    const char *to_bitstring(unsigned long long number, int num_bits);
-    const char *to_bitstring(const char *number, short radix);
-    const char *to_bitstring(const char *number, short radix, int num_bits);
-
-    bool containing_only_character_from_list(const char *string, const char *char_list);
-    bool not_containing_character_from_list(const char *string, const char* char_list);
-
-    bool is_dont_care_string(const char *string)		;
-    bool is_string_of_radix(const char *string, short radix);
-
-    const char *verilog_input_to_binary_string(const char *orig_string);
-
 };
