@@ -1,4 +1,6 @@
-#include <rtl_int.h>
+// #include <rtl_int.h>
+#include <cstdarg>
+#include "stdio.h"
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -17,14 +19,6 @@ std::vector<std::string> list_of_file_names;
  *                                                                         
  */
 
-#define oassert(condition) { \
-	if(!(condition)) { \
-		std::clog << "ASSERT FAILED: " << #condition << " \n\t@" << __FILE__<< "::" << __LINE__ << std::endl; std::abort(); \
-} 	}
-
-/*---------------------------------------------------------------------------------------------
-* (function: error_message)
-*-------------------------------------------------------------------------------------------*/
 static void error_message(int line_number, int file, const char *message, ...)
 {
 	va_list ap;
@@ -51,32 +45,28 @@ static void error_message(int line_number, int file, const char *message, ...)
 	std::abort();
 }
 
-/*---------------------------------------------------------------------------------------------
-* (function: warning_message)
-*-------------------------------------------------------------------------------------------*/
-static void warning_message(int line_number, int file, const char *message, ...)
-{
-	va_list ap;
+#define bad_value(test) _bad_value(test, __FILE__, __LINE__)
+inline static const char _bad_value(char test, char *FILE, int LINE)	
+{	
+	std::clog << "INVALID BIT INPUT: (" << test << ")@" << __FILE__<< "::" << __LINE__ << std::endl;	
+	std::abort;		
+	return 0; 
+}
 
-	std::clog << "WARNING ";
+#define bad_ops(test) _bad_ops(test, __FILE__, __LINE__)
+inline static std::string _bad_ops(std::string test, char *FILE, int LINE)	
+{	
+	std::clog << "INVALID INPUT OPS: (" << test << ")@" << __FILE__<< "::" << __LINE__ << std::endl;	
+	std::abort;		
+	return "'bDEADBEEF"; 
+}
 
-	if (file >= 0 && file < list_of_file_names.size())
-		std::clog << "@" << list_of_file_names[file];
-
-	if (line_number > 0)
-		std::clog << "::" << std::to_string(line_number);
-
-	std::clog << " ";
-
-	if (message)
-	{
-		char buf[1024];
-		va_start(ap, message);
-		vsprintf(buf,message, ap);
-		std::clog << buf;
-		va_end(ap);
-	}
-	std::clog << "\n";
+#define bad_bit_string(test) _bad_bit_string(test, __FILE__, __LINE__)
+inline static const char _bad_bit_string(std::string test, char *FILE, int LINE)	
+{	
+	std::clog << "INVALID INPUT BITSTRING: (" << test << ")@" << __FILE__<< "::" << __LINE__ << std::endl;	
+	std::abort;		
+	return 0; 
 }
 
 /***
@@ -85,6 +75,30 @@ static void warning_message(int line_number, int file, const char *message, ...)
  *    |__) |  |     .__/  |  |  \ | | \| \__>    |  | /~~\ | \| |__/ |___ |___ |  \ .__/ 
  *                                                                                       
  */
+
+#define is_signed(bits)	(bits[0] == "0")? 0 : 1
+#define get_len(bits)	v_strtoull(bits[1],10)
+#define get_bits(bits)	bits[2]
+
+inline static std::string set_len(std::vector<std::string> internal_binaries, long new_len)
+{
+	if(get_len(internal_binaries) == 0)
+		return "0";
+	else if(get_len(internal_binaries) > 0)
+		return internal_binaries[1];
+	else if(new_len >= 0)
+		return std::to_string(new_len);
+	else 
+		error_message(-1, -1, "Invalid length %d number.\n", new_len);
+}
+
+inline static std::string set_sign(std::vector<std::string> internal_binaries, bool new_sign)
+{
+	if(new_sign && is_signed(internal_binaries))
+		return "1";
+	else
+		return "0";
+}
 
 #define containing_only_character_from_list(input, char_list) 	( input.find_first_not_of(char_list) == std::string::npos )
 #define containing_character_from_list(input, char_list)	( input.find(char_list) == std::string::npos )
@@ -95,28 +109,18 @@ static void warning_message(int line_number, int file, const char *message, ...)
 												:(radix == 2)?	( containing_only_character_from_list(input,"01xXzZ") ) \
 												:false
 
-std::string resize(std::string binary_number, int binary_limit, bool is_signed)
-{
-	binary_limit = binary_limit;
-	//remove unecessary bits
-	if(binary_limit <= 0)
-	{
-		while( binary_number.length() > 1 
-		&& ((is_signed && binary_number[0] == binary_number[1]) 
-			|| ( binary_number[0] == '0' ) 
-			|| containing_only_character_from_list(binary_number,"xX")))
-			binary_number.erase(0,1);
-	}
-	//expand to length
-	else if(binary_limit > binary_number.length() )
-		binary_number.insert(0,std::string(binary_limit-binary_number.length(), (!is_signed && tolower(binary_number[0]) !='x')? '0': binary_number[0]));
-	
-	//truncate to length
-	else
-		binary_number.substr(binary_number.length() - binary_limit);
-}
+#define MSB 0
 
-unsigned long long v_strtoull(std::string orig_number, int radix)
+#define PUSH_MS_BITSTRING(str,chr)	str.insert(MSB,chr)
+#define PUSH_MSB(str,chr)			str.insert(MSB,std::string(1,chr))
+#define SET_MSB(str,chr)			str[MSB] = std::tolower(chr)
+#define GET_MSB(str)				std::tolower(str[MSB])
+
+#define POP_LSB(str)				std::tolower(str[str.length()-1]); str.pop_back()
+#define PUSH_LSB(str)				str.append(std::string(1,chr))
+#define PUSH_LS_BITSTRING(str)		str.append(chr)
+
+static unsigned long long v_strtoull(std::string orig_number, int radix)
 {
 	if (!is_string_of_radix(orig_number, radix))
 		error_message(-1, -1, "Invalid base %d number: %s.\n", radix, orig_number);
@@ -131,11 +135,11 @@ unsigned long long v_strtoull(std::string orig_number, int radix)
 }
 
 
-std::string to_bitstring(std::string orig_number, int radix, int num_bits, bool is_signed);
-std::string to_bitstring(std::string orig_string, int radix, int num_bits, bool is_signed)
+static std::string to_bitstring(std::string orig_string, int radix)
 {
 	std::string result = "";	
-	oassert(is_string_of_radix(orig_string,radix));
+	if(!is_string_of_radix(orig_string,radix))
+		bad_bit_string(orig_string);
 
 	while(orig_string != "")
 	{
@@ -146,7 +150,7 @@ std::string to_bitstring(std::string orig_string, int radix, int num_bits, bool 
 				std::string new_number = "";
 				char prev = '0';
 				short flag = 0;
-				for(int i=0; i<orig_string.length(); i++)
+				for(int i=orig_string.length()-1; i>=0; i--)
 				{
 					short new_pair = ((prev-'0')%2)*10 + (orig_string[i]-'0');
 					std::string div(std::to_string(new_pair/2));
@@ -159,73 +163,82 @@ std::string to_bitstring(std::string orig_string, int radix, int num_bits, bool 
 					if(flag)
 						new_number.append(div);
 					
-					if(i == orig_string.length()-1)
+					if(i == MSB)
 					{
-						result.insert(0, rem);
+						PUSH_MS_BITSTRING(result, rem);
 						orig_string = new_number;
 					}
 				}
 				break;
 			}
 			case 2:
-			{
-				switch(tolower(orig_string[0]))
-				{
-					case '0': result.append("0");	break;
-					case '1': result.append("1");	break;
-					case 'x': result.append("x");	break;
-					case 'z': result.append("z");	break;
-					default:  oassert(0);			break;
-				}
-				orig_string.erase(0,1);
-				break;
-			}
 			case 8:
-			{
-				switch(tolower(orig_string[0]))
-				{
-					case '0': result.append("000");	break;
-					case '1': result.append("001");	break;
-					case '2': result.append("010");	break;
-					case '3': result.append("011");	break;
-					case '4': result.append("100");	break;
-					case '5': result.append("101");	break;
-					case '6': result.append("110");	break;
-					case '7': result.append("111");	break;
-					case 'x': result.append("xxx");	break;
-					case 'z': result.append("zzz");	break;
-					default:  oassert(0);			break;
-				}
-				orig_string.erase(0,1);
-				break;
-			}
 			case 16:
-			{
-				switch(tolower(orig_string[0]))
+				switch(radix)
 				{
-					case '0': result.append("0000");	break;
-					case '1': result.append("0001");	break;
-					case '2': result.append("0010");	break;
-					case '3': result.append("0011");	break;
-					case '4': result.append("0100");	break;
-					case '5': result.append("0101");	break;
-					case '6': result.append("0110");	break;
-					case '7': result.append("0111");	break;
-					case '8': result.append("1000");	break;
-					case '9': result.append("1001");	break;
-					case 'a': result.append("1010");	break;
-					case 'b': result.append("1011");	break;
-					case 'c': result.append("1100");	break;
-					case 'd': result.append("1101");	break;
-					case 'e': result.append("1110");	break;
-					case 'f': result.append("1111");	break;
-					case 'x': result.append("xxxx");	break;
-					case 'z': result.append("zzzz");	break;
-					default:  oassert(0);				break;
+					char lsb = POP_LSB(orig_string);
+					case 2:
+					{
+						switch(lsb)
+						{
+							case '0': PUSH_MS_BITSTRING(result, "0");	break;
+							case '1': PUSH_MS_BITSTRING(result, "1");	break;
+							case 'x': PUSH_MS_BITSTRING(result, "x");	break;
+							case 'z': PUSH_MS_BITSTRING(result, "z");	break;
+							default:  bad_value(lsb);		break;
+						}
+						break;
+					}
+					case 8:
+					{
+						switch(lsb)
+						{
+							case '0': PUSH_MS_BITSTRING(result, "000");	break;
+							case '1': PUSH_MS_BITSTRING(result, "001");	break;
+							case '2': PUSH_MS_BITSTRING(result, "010");	break;
+							case '3': PUSH_MS_BITSTRING(result, "011");	break;
+							case '4': PUSH_MS_BITSTRING(result, "100");	break;
+							case '5': PUSH_MS_BITSTRING(result, "101");	break;
+							case '6': PUSH_MS_BITSTRING(result, "110");	break;
+							case '7': PUSH_MS_BITSTRING(result, "111");	break;
+							case 'x': PUSH_MS_BITSTRING(result, "xxx");	break;
+							case 'z': PUSH_MS_BITSTRING(result, "zzz");	break;
+							default:  bad_value(lsb);		break;
+						}
+						break;
+					}
+					case 16:
+					{
+						switch(lsb)
+						{
+							case '0': PUSH_MS_BITSTRING(result, "0000");	break;
+							case '1': PUSH_MS_BITSTRING(result, "0001");	break;
+							case '2': PUSH_MS_BITSTRING(result, "0010");	break;
+							case '3': PUSH_MS_BITSTRING(result, "0011");	break;
+							case '4': PUSH_MS_BITSTRING(result, "0100");	break;
+							case '5': PUSH_MS_BITSTRING(result, "0101");	break;
+							case '6': PUSH_MS_BITSTRING(result, "0110");	break;
+							case '7': PUSH_MS_BITSTRING(result, "0111");	break;
+							case '8': PUSH_MS_BITSTRING(result, "1000");	break;
+							case '9': PUSH_MS_BITSTRING(result, "1001");	break;
+							case 'a': PUSH_MS_BITSTRING(result, "1010");	break;
+							case 'b': PUSH_MS_BITSTRING(result, "1011");	break;
+							case 'c': PUSH_MS_BITSTRING(result, "1100");	break;
+							case 'd': PUSH_MS_BITSTRING(result, "1101");	break;
+							case 'e': PUSH_MS_BITSTRING(result, "1110");	break;
+							case 'f': PUSH_MS_BITSTRING(result, "1111");	break;
+							case 'x': PUSH_MS_BITSTRING(result, "xxxx");	break;
+							case 'z': PUSH_MS_BITSTRING(result, "zzzz");	break;
+							default:  bad_value(lsb);			break;
+						}
+						break;
+					}
+					default:
+					{
+						error_message(-1, -1, "Invalid base %d number: %s.\n", radix, orig_string);
+						break;
+					}
 				}
-				orig_string.erase(0,1);
-				break;
-			}
 			default:
 			{
 				error_message(-1, -1, "Invalid base %d number: %s.\n", radix, orig_string);
@@ -233,11 +246,10 @@ std::string to_bitstring(std::string orig_string, int radix, int num_bits, bool 
 			}
 		}
 	}
-
-	return resize(result, num_bits, false);
+	return result;
 }
 
-std::string cleanup_input (std::string input_number)
+std::vector<std::string> standardize_input(std::string input_number)
 {	
 	//remove underscores
 	input_number.erase(std::remove(input_number.begin(), input_number.end(), '_'), input_number.end());
@@ -249,26 +261,68 @@ std::string cleanup_input (std::string input_number)
 		loc = 0;
 	}
 
-	int bin_length = (loc == 0)? DEFAULT_BIT_WIDTH: std::strtoul(input_number.substr(0,loc).c_str(),NULL,10);
-	std::string appendage("b'");
-	if(bin_length)
-		appendage.insert(0,std::to_string(bin_length));
+	std::string bin_length = (loc == 0)? DEFAULT_BIT_WIDTH: input_number.substr(0,loc);
 
-	bool is_signed = false;
+	std::string is_signed = "0";
 	if(std::tolower(input_number[loc+1]) == 's')
 	{
 		input_number.erase (input_number.begin()+loc+1);
-		is_signed = true;
+		is_signed = "1";
 	}
+	std::string binary = "DEADBEEF";
 
 	switch(std::tolower(input_number[loc+1]))
 	{
-		case 'b':	return appendage + to_bitstring(input_number.substr(loc+2), 2, bin_length, is_signed);
-		case 'o':	return appendage + to_bitstring(input_number.substr(loc+2), 8, bin_length, is_signed);
-		case 'd':	return appendage + to_bitstring(input_number.substr(loc+2), 10, bin_length, is_signed);
-		case 'h':	return appendage + to_bitstring(input_number.substr(loc+2), 16, bin_length, is_signed);
-		default:	error_message(-1, -1, "Invalid base (%c) number: %s.\n", input_number[loc+1], input_number);;
+		case 'b':	binary = to_bitstring(input_number.substr(loc+2), 2); break;
+		case 'o':	binary = to_bitstring(input_number.substr(loc+2), 8); break;
+		case 'd':	binary = to_bitstring(input_number.substr(loc+2), 10); break;
+		case 'h':	binary = to_bitstring(input_number.substr(loc+2), 16); break;
+		default:	error_message(-1, -1, "Invalid base (%c) number: %s.\n", input_number[loc+1], input_number); break;
 	}
+
+	return {is_signed, bin_length, binary};
+}
+
+
+//resize bitstring to its own length
+inline static std::vector<std::string> resize(std::vector<std::string> internal_binary_number)
+{
+	//expand to length
+	long long size_dif = get_len(internal_binary_number)-get_bits(internal_binary_number).length();
+	if(size_dif > 0)
+	{
+		std::string padding_bits(size_dif, (!is_signed(internal_binary_number) || GET_MSB(get_bits(internal_binary_number)) =='x')? '0': GET_MSB(get_bits(internal_binary_number)));
+		PUSH_MS_BITSTRING(get_bits(internal_binary_number), padding_bits);
+	}
+
+	//truncate to length
+	else if (size_dif < 0)
+		get_bits(internal_binary_number) = get_bits(internal_binary_number).substr(-size_dif);
+
+	return internal_binary_number;
+}
+
+// convert internal format to verilog
+std::string v_bin_string(std::vector<std::string> internal_binary_number)
+{
+	std::string output = "b\'";
+
+	if(get_len(internal_binary_number)>0)
+		output += internal_binary_number[1];
+
+	output += "\'";
+
+	if(is_signed(internal_binary_number)) 
+		output += "s";
+
+	output += "b";
+
+	//final resize
+	resize(internal_binary_number);
+
+	output += get_bits(internal_binary_number);
+
+	return output;
 }
 
 /***
@@ -283,131 +337,171 @@ std::string cleanup_input (std::string input_number)
  * reference: http://staff.ustc.edu.cn/~songch/download/IEEE.1364-2005.pdf
  * 
  *******************************************************/ 
+#define REF_0 0
+#define REF_1 1
+#define REF_x 2
+#define REF_z 3
 
-inline static const char bad_value(char test, char *FILE, int LINE)	
-{	
-	std::clog << "INVALID INPUT: (" << test << ")@" << __FILE__<< "::" << __LINE__ << std::endl;	
-	std::abort;		
-	return 0; 
-}
-
-inline static const char v_switch(	const char a, 
-										const char _0, const char _1, const char  _x, const char _z,
-										char *FILE, int LINE) 
+inline static const char v_switch(	const char a, const char lut[4], char *FILE, int LINE) 
 {
-	return 	((a) == '0')				?	_0 :
-			((a) == '1')				?	_1 :
-			(std::tolower(a) == 'x')	?	_x : 
-			(std::tolower(a) == 'z')	?	_z :
-											bad_value(a, FILE,LINE)
+	return 	((a) == '0')				?	lut[REF_0] :
+			((a) == '1')				?	lut[REF_1] :
+			(std::tolower(a) == 'x')	?	lut[REF_x] : 
+			(std::tolower(a) == 'z')	?	lut[REF_z] :
+											_bad_value(a, FILE,LINE)
 			;
 }
 
-inline static const char v_switch(	const char a, const char b, 
-										const char _00, const char _01, const char _0x, const char _0z, 
-										const char _10, const char _11, const char _1x, const char _1z, 
-										const char _x0, const char _x1, const char _xx, const char _xz, 
-										const char _z0, const char _z1, const char _zx, const char _zz,
-										char *FILE, int LINE) 
+inline static const char v_switch(	const char a, const char b, const char lut[4][4], char *FILE, int LINE) 
 {
-	return 	((a) == '0')				? 	v_switch(b, _00, _01, _0x, _0z, FILE, LINE)	:
-			((a) == '1')				? 	v_switch(b, _10, _11, _1x, _1z, FILE, LINE) 	:
-			(std::tolower(a) == 'x')	?	v_switch(b, _x0, _x1, _xx, _xz, FILE, LINE)	: 
-			(std::tolower(a) == 'z')	?	v_switch(b, _z0, _z1, _zx, _zz, FILE, LINE) 	:
-											bad_value(a, FILE, LINE)
+	return 	((a) == '0')				? 	v_switch(b, lut[REF_0], FILE, LINE)	:
+			((a) == '1')				? 	v_switch(b, lut[REF_1], FILE, LINE) :
+			(std::tolower(a) == 'x')	?	v_switch(b, lut[REF_x], FILE, LINE)	: 
+			(std::tolower(a) == 'z')	?	v_switch(b, lut[REF_z], FILE, LINE) :
+											_bad_value(a, FILE, LINE)
 			;
 }
 
-/* P:111 */
-#define v_buf(a)				v_switch(a,\
-	/*	 	 0   1   x   z  <- a*/	\
-			'0','1','x','x',		\
-	__FILE__,__LINE__)
+static const char l_buf[4] = {
+	/*	 0   1   x   z  <- a*/
+		'0','1','x','x'
+};
 
-#define v_not(a)				v_switch(a,\
-	/*   	 0   1   x   z 	<- a */	\
-			'1','0','x','x',			\
-	__FILE__,__LINE__)
+static const char l_not[4] = {
+	/*   0   1   x   z 	<- a */
+		'1','0','x','x'
+};
 
-#define v_and(a,b)				v_switch(a,b,\
-	/* a  /	 0   1   x   z 	<-b */	\
-	/* 0 */	'0','0','0','0',		\
-	/* 1 */	'0','1','x','x',		\
-	/* x */	'0','x','x','x',		\
-	/* z */	'0','x','x','x',		\
-	__FILE__,__LINE__)
+static const char l_and[4][4] = {
+	/* a  /	 0   1   x   z 	<-b */	
+	/* 0 */	{'0','0','0','0'},	
+	/* 1 */	{'0','1','x','x'},	
+	/* x */	{'0','x','x','x'},	
+	/* z */	{'0','x','x','x'}
+};
 
-#define v_or(a,b)				v_switch(a,b,\
-	/* a  /	 0   1   x   z 	<-b */	\
-	/* 0 */	'0','1','x','x',		\
-	/* 1 */	'1','1','1','1',		\
-	/* x */	'x','1','x','x',		\
-	/* z */	'x','1','x','x',		\
-	__FILE__,__LINE__)
+static const char l_or[4][4] = {
+	/* a  /	 0   1   x   z 	<-b */	
+	/* 0 */	{'0','1','x','x'},	
+	/* 1 */	{'1','1','1','1'},	
+	/* x */	{'x','1','x','x'},	
+	/* z */	{'x','1','x','x'}
+};
 
-#define v_xor(a,b)				v_switch(a,b,\
-	/* a  /	 0   1   x   z 	<-b */	\
-	/* 0 */	'0','1','x','x',		\
-	/* 1 */	'1','0','x','x',		\
-	/* x */	'x','x','x','x',		\
-	/* z */	'x','x','x','x',		\
-	__FILE__,__LINE__)
+static const char l_xor[4][4] = {
+	/* a  /	 0   1   x   z 	<-b */	
+	/* 0 */	{'0','1','x','x'},	
+	/* 1 */	{'1','0','x','x'},	
+	/* x */	{'x','x','x','x'},	
+	/* z */	{'x','x','x','x'}
+};
 
-#define v_nand(a,b)				v_switch(a,b,\
-	/* a  /	 0   1   x   z 	<-b */	\
-	/* 0 */	'1','1','1','1',		\
-	/* 1 */	'1','0','x','x',		\
-	/* x */	'1','x','x','x',		\
-	/* z */	'1','x','x','x',		\
-	__FILE__,__LINE__)
+static const char l_nand[4][4] = {
+	/* a  /	 0   1   x   z 	<-b */	
+	/* 0 */	{'1','1','1','1'},	
+	/* 1 */	{'1','0','x','x'},	
+	/* x */	{'1','x','x','x'},	
+	/* z */	{'1','x','x','x'}
+};
 
-#define v_nor(a,b)				v_switch(a,b,\
-	/* a  /	 0   1   x   z 	<-b */	\
-	/* 0 */	'1','0','x','x',		\
-	/* 1 */	'0','0','0','0',		\
-	/* x */	'x','0','x','x',		\
-	/* z */	'x','0','x','x',		\
-	__FILE__,__LINE__)
+static const char l_nor[4][4] = {
+	/* a  /	 0   1   x   z 	<-b */	
+	/* 0 */	{'1','0','x','x'},	
+	/* 1 */	{'0','0','0','0'},	
+	/* x */	{'x','0','x','x'},	
+	/* z */	{'x','0','x','x'}
+};
 
-#define v_xnor(a,b)				v_switch(a,b,\
-	/* a  /	 0   1   x   z 	<-b */	\
-	/* 0 */	'1','0','x','x',		\
-	/* 1 */	'0','1','x','x',		\
-	/* x */	'x','x','x','x',		\
-	/* z */	'x','x','x','x',		\
-	__FILE__,__LINE__)
+static const char l_xnor[4][4] = {
+	/* a  /	 0   1   x   z 	<-b */	
+	/* 0 */	{'1','0','x','x'},	
+	/* 1 */	{'0','1','x','x'},	
+	/* x */	{'x','x','x','x'},	
+	/* z */	{'x','x','x','x'}
+};
 
-#define v_notif1(in,control)	v_switch(in,control,\
-	/* in /	 0   1   x   z 	<-control */	\
-	/* 0 */	'z','1','H','H',	\
-	/* 1 */	'z','0','L','L',	\
-	/* x */	'z','x','x','x',	\
-	/* z */	'z','x','x','x',	\
-	__FILE__,__LINE__)
+static const char l_notif1[4][4] = {
+	/* in /	 0   1   x   z 	<-control */	
+	/* 0 */	{'z','1','H','H'},
+	/* 1 */	{'z','0','L','L'},
+	/* x */	{'z','x','x','x'},
+	/* z */	{'z','x','x','x'}
+};
 
-#define v_notif0(in,control)	v_switch(in,control,\
-	/* in /	 0   1   x   z 	<-control */	\
-	/* 0 */	'1','z','H','H',	\
-	/* 1 */	'0','z','L','L',	\
-	/* x */	'x','z','x','x',	\
-	/* z */	'x','z','x','x',	\
-	__FILE__,__LINE__)
+static const char l_notif0[4][4] = {
+	/* in /	 0   1   x   z 	<-control */	
+	/* 0 */	{'1','z','H','H'},
+	/* 1 */	{'0','z','L','L'},
+	/* x */	{'x','z','x','x'},
+	/* z */	{'x','z','x','x'}
+};
 
-#define v_bufif1(in,control)	v_switch(in,control,\
-	/* in /	 0   1   x   z 	<-control */	\	
-	/* 0 */	'z','0','H','H',	\
-	/* 1 */	'z','1','L','L',	\
-	/* x */	'z','x','x','x',	\
-	/* z */	'z','x','x','x',	\
-	__FILE__,__LINE__)
+static const char l_bufif1[4][4] = {
+	/* in /	 0   1   x   z 	<-control */	
+	/* 0 */	{'z','0','H','H'},
+	/* 1 */	{'z','1','L','L'},
+	/* x */	{'z','x','x','x'},
+	/* z */	{'z','x','x','x'}
+};
 
-#define v_bufif0(in,control)	v_switch(in,control,\
-	/* in /	 0   1   x   z 	<-control */	\
-	/* 0 */	'0','z','H','H',	\
-	/* 1 */	'1','z','L','L',	\
-	/* x */	'x','z','x','x',	\
-	/* z */	'x','z','x','x',	\
-	__FILE__,__LINE__)
+static const char l_bufif0[4][4] = {
+	/* in /	 0   1   x   z 	<-control */	
+	/* 0 */	{'0','z','H','H'},
+	/* 1 */	{'1','z','L','L'},
+	/* x */	{'x','z','x','x'},
+	/* z */	{'x','z','x','x'}
+};
+
+static const char l_rpmos[4][4] = {
+	/* in /	 0   1   x   z 	<-control */	
+	/* 0 */	{'0','z','L','L'},
+	/* 1 */	{'1','z','H','H'},
+	/* x */	{'x','z','x','x'},
+	/* z */	{'z','z','z','z'}
+};
+
+static const char l_rnmos[4][4] = {
+	/* in /	 0   1   x   z 	<-control */	
+	/* 0 */	{'z','0','L','L'},
+	/* 1 */	{'z','1','H','H'},
+	/* x */	{'z','x','x','x'},
+	/* z */	{'z','z','z','z'}
+};
+
+static const char l_nmos[4][4] = {
+	/* in /	 0   1   x   z 	<-control */	
+	/* 0 */	{'z','0','L','L'},
+	/* 1 */	{'z','1','H','H'},
+	/* x */	{'z','x','x','x'},
+	/* z */	{'z','z','z','z'}
+};
+
+// see table 5-21 p:54 IEEE 1364-2005
+static const char l_ternary[4][4] = {
+	/* in /	 0   1   x   z 	<-control */	
+	/* 0 */	{'0','x','x','x'},
+	/* 1 */	{'x','1','x','x'},
+	/* x */	{'x','x','x','x'},
+	/* z */	{'x','x','x','x'}
+};
+
+#define v_buf(a)				v_switch(a, 			l_buf,		__FILE__,__LINE__)
+#define v_not(a)				v_switch(a, 			l_not,		__FILE__,__LINE__)
+#define v_and(a,b)				v_switch(a,b, 			l_and,		__FILE__,__LINE__)
+#define v_or(a,b)				v_switch(a,b, 			l_or,		__FILE__,__LINE__)
+#define v_xor(a,b)				v_switch(a,b, 			l_xor,		__FILE__,__LINE__)
+#define v_nand(a,b)				v_switch(a,b, 			l_nand,		__FILE__,__LINE__)
+#define v_nor(a,b)				v_switch(a,b, 			l_nor,		__FILE__,__LINE__)
+#define v_xnor(a,b)				v_switch(a,b, 			l_xnor,		__FILE__,__LINE__)
+#define v_notif1(in,control)	v_switch(in,control, 	l_notif1,	__FILE__,__LINE__)
+#define v_notif0(in,control)	v_switch(in,control, 	l_notif0,	__FILE__,__LINE__)
+#define v_bufif1(in,control)	v_switch(in,control, 	l_bufif1,	__FILE__,__LINE__)
+#define v_bufif0(in,control)	v_switch(in,control, 	l_bufif0,	__FILE__,__LINE__)
+#define v_rpmos(in, control)	v_switch(in,control, 	l_rpmos,	__FILE__,__LINE__)
+#define v_pmos(in,control)		v_switch(in,control, 	l_pmos,		__FILE__,__LINE__)
+#define v_rnmos(in, control)	v_switch(in,control, 	l_rnmos,	__FILE__,__LINE__)
+#define v_nmos(in,control)		v_switch(in,control, 	l_nmos,		__FILE__,__LINE__)
+#define v_ternary(in,control)	v_switch(in,control,	l_ternary,	__FILE__,__LINE__)
 
 /***
  * these are extended defines to simplify our lives
@@ -415,120 +509,129 @@ inline static const char v_switch(	const char a, const char b,
 #define add_func(a, b, carry)	v_xor(v_xor(a,b),carry)
 #define carry_func(a, b, carry)	v_or(v_and(a,b),v_and(v_xor(a,b),carry))
 
-#define OPTIMIZED 0
+
+
 /***
  *                    __          __   __   ___  __       ___    __       
  *    |  | |\ |  /\  |__) \ /    /  \ |__) |__  |__)  /\   |  | /  \ |\ | 
  *    \__/ | \| /~~\ |  \  |     \__/ |    |___ |  \ /~~\  |  | \__/ | \| 
  *                                                                        
  */
-static std::string arithmetic(std::string op, std::string a, size_t a_length, bool a_signed)
+
+inline static std::vector<std::string> V_NEG(std::vector<std::string> a)
 {
 	std::string result = "";
-	size_t result_length = 0;
-	bool result_sign = a_signed;
-
-    if (op == "~")		// negation
-	{	
-		for(int i=0; i<a.length(); i++)
-			result[i] = v_not(a[i]);
-			}
-    else if(op == "&")	// reduction AND
-	{
-		result = std::string(a[0],1);
-		for(int i=1; i<a.length() && (!OPTIMIZED || result[0] == '1'); i++)
-			result[0] = v_and(a[i], result[0]);		
-		
-		result_length = 1;
-		result_sign = false;
-	}
-    else if(op == "|")	// reduction OR
-	{
-		result = std::string(a[0],1);
-		for(int i=1; i<a.length() && (!OPTIMIZED || result[0] != '1'); i++)
-			result[0] = v_or(a[i], result[0]);		
-		
-		result_length = 1;
-		result_sign = false;
-	}
-    else if(op == "^")	// reduction XOR
-	{
-		result = std::string(a[0],1);
-		for(int i=1; i<a.length(); i++)
-			result[0] = v_xor(a[i], result[0]);		
-		
-		result_length = 1;
-		result_sign = false;
-	}
-    else if(op == "~&")	// reduction NAND
-	{
-		result = std::string(a[0],1);
-		for(int i=1; i<a.length(); i++)
-			result[0] = v_nand(a[i], result[0]);		
-		
-		result_length = 1;
-		result_sign = false;
-	}
-    else if(op == "~|")	// reduction NOR
-	{
-		result = std::string(a[0],1);
-		for(int i=1; i<a.length() && (!OPTIMIZED || result[0] == '1'); i++)
-			result[0] = v_nor(a[i], result[0]);
-		
-		result_length = 1;
-		result_sign = false;
-	}
-    else if(op == "~^")	// reduction XNOR
-	{
-		result = std::string(a[0],1);
-		for(int i=1; i<a.length(); i++)
-			result[0] = v_xnor(a[i], result[0]);
-		
-		result_length = 1;
-		result_sign = false;
-	}
-    else if(op == "!")	// logical NOT
-	{
-		result = std::string(a[0],1);
-		for(int i=1; i<a.length() && (!OPTIMIZED || result[0] != '1'); i++)
-			result[0] = v_or(a[i], result[0]);
-		
-		result[0] = v_not(result[0]);
-		
-		result_length = 1;
-		result_sign = false;
-	}
-    else if(op == "-")	// minus
-	{
-		result = arithmetic("~", a, a.length(), true);
-		result = arithmetic("++", result, result.length()+1, true);
-		result_sign = true; //verify this overide
-	}
-    else if(op == "+")	// plus
-	{
-		result = a;
-		result_length = a_length;
-		result_sign = true;
-	}
-	// these are not standard verilog but simplify our lives where possible and speed up
-	else if(op == "++")
-	{
-		char previous_carry = '1';
-		for(int i=a.length()-1; i >= 0  && previous_carry == '1'; i++)
-		{
-			result[i+1] = v_xor(a[i], previous_carry);
-			previous_carry = v_and(a[i], previous_carry);
-		}
-		result[0] = previous_carry;
+	for(int i=get_bits(a).length()-1; i >= MSB; i--)
+		PUSH_MSB(result, v_not(get_bits(a)[i]));
 	
-		result_length = a.length()+1;
-	}
-	else
-	{
-		error_message(-1,-1,"Operator %s is invalid for unary operation", op);
-    }
-	return result;
+	return {set_sign(a, false), set_len(a, 0), result};
 }
+
+inline static std::vector<std::string> V_ADD(std::vector<std::string> a)
+{
+	return a;
+}
+
+inline static std::vector<std::string> V_MINUS(std::vector<std::string> a)
+{
+	return V_PLUS_PLUS(V_NEG(a));
+}
+
+inline static std::vector<std::string>  V_MINUS_MINUS(std::vector<std::string> a)
+{
+	std::string result = "1";
+	for(int i=get_bits(a).length()-1; i >= 0; i--)
+	{
+		const char tmp_add = v_xnor(get_bits(a)[i], GET_MSB(result));
+		const char tmp_carry = v_or(get_bits(a)[i], GET_MSB(result));
+
+		SET_MSB(result, tmp_add);
+		PUSH_MSB(result, tmp_carry);
+	}
+	return {set_sign(a, true), set_len(a, 0), result};
+}
+
+inline static std::vector<std::string> V_PLUS_PLUS(std::vector<std::string> a)
+{
+	std::string result = "1";
+	for(int i=get_bits(a).length()-1; i >= 0; i--)
+	{
+		const char tmp_add = v_xor(get_bits(a)[i], GET_MSB(result));
+		const char tmp_carry = v_and(get_bits(a)[i], GET_MSB(result));
+
+		SET_MSB(result, tmp_add);
+		PUSH_MSB(result, tmp_carry);
+	}
+	return {set_sign(a, true), set_len(a, 0), result};
+}
+
+inline static std::vector<std::string> V_REDUCTION_AND(std::vector<std::string> a)
+{
+	int end = get_bits(a).length()-1;
+	std::string result = std::string(get_bits(a)[end--],1);
+	for(int i=end; i>=MSB; i--)
+		SET_MSB(result,v_and(get_bits(a)[i],GET_MSB(result)));
+
+	return {set_sign(a, false), set_len(a, 1), result};
+}
+
+inline static std::vector<std::string> V_REDUCTION_OR(std::vector<std::string> a)
+{
+	int end = get_bits(a).length()-1;
+	std::string result = std::string(get_bits(a)[end--],1);
+	for(int i=end; i>=MSB; i--)
+		SET_MSB(result,v_or(get_bits(a)[i],GET_MSB(result)));
+
+	return {set_sign(a, false), set_len(a, 1), result};
+}
+
+inline static std::vector<std::string> V_REDUCTION_XOR(std::vector<std::string> a)
+{
+	int end = get_bits(a).length()-1;
+	std::string result = std::string(get_bits(a)[end--],1);
+	for(int i=end; i>=MSB; i--)
+		SET_MSB(result,v_xor(get_bits(a)[i],GET_MSB(result)));
+
+	return {set_sign(a, false), set_len(a, 1), result};
+}
+
+inline static std::vector<std::string> V_REDUCTION_NAND(std::vector<std::string> a)
+{
+	int end = get_bits(a).length()-1;
+	std::string result = std::string(get_bits(a)[end--],1);
+	for(int i=end; i>=MSB; i--)
+		SET_MSB(result,v_nand(get_bits(a)[i],GET_MSB(result)));
+
+	return {set_sign(a, false), set_len(a, 1), result};
+}
+
+inline static std::vector<std::string> V_REDUCTION_NOR(std::vector<std::string> a)
+{
+	int end = get_bits(a).length()-1;
+	std::string result = std::string(get_bits(a)[end--],1);
+	for(int i=end; i>=MSB; i--)
+		SET_MSB(result,v_nor(get_bits(a)[i],GET_MSB(result)));
+
+	return {set_sign(a, false), set_len(a, 1), result};
+}
+
+inline static std::vector<std::string> V_REDUCTION_XNOR(std::vector<std::string> a)
+{
+	int end = get_bits(a).length()-1;
+	std::string result = std::string(get_bits(a)[end--],1);
+	for(int i=end; i>=MSB; i--)
+		SET_MSB(result,v_xnor(get_bits(a)[i],GET_MSB(result)));
+
+	return {set_sign(a, false), set_len(a, 1), result};
+}
+
+inline static std::vector<std::string> V_LOGICAL_NOT(std::vector<std::string> a)
+{
+	return V_REDUCTION_NOR(a);
+}
+
+
+
 
 /***
  *     __               __          __   __   ___  __       ___    __       
@@ -536,94 +639,95 @@ static std::string arithmetic(std::string op, std::string a, size_t a_length, bo
  *    |__) | | \| /~~\ |  \  |     \__/ |    |___ |  \ /~~\  |  | \__/ | \| 
  *                                                                          
  */
-static std::string arithmetic(std::string a, size_t a_length, short a_signed, std::string op, std::string b, size_t b_length, short b_signed)
+static std::string binops(std::string a_in, std::string op, std::string b_in)
 {
-	size_t length = std::max(a_length, b_length);
-	std::string adj_a = resize(a, length, a_signed);
-	std::string adj_b = resize(b, length, b_signed);
+
+	/**********************************
+	 * Gather input 
+	 */
+
+	/* get A */
+	int offset = 0;
+	auto loc = a_in.find("\'");
+	long a_length = (loc == 0)? DEFAULT_BIT_WIDTH: v_strtoull(a_in.substr(0,loc),2);
+	bool a_signed = false;
+
+	offset++;// skip " ' "
+	if(std::tolower(a_in[loc+offset]) == 's')
+	{
+		a_signed = true;
+		offset ++; //skip " s "
+	}
+	offset++; // skip  " [ b, o, d, h ] "
+	std::string a = a_in.substr(loc+offset);
+
+	/* get B */
+	offset = 0;
+	loc = b_in.find("\'");
+	long b_length = (loc == 0)? DEFAULT_BIT_WIDTH: v_strtoull(b_in.substr(0,loc), 2);
+	bool b_signed = false;
+
+	offset++;// skip " ' "
+	if(std::tolower(b_in[loc+offset]) == 's')
+	{
+		b_signed = true;
+		offset ++; //skip " s "
+	}
+	offset++; // skip  " [ b, o, d, h ] "
+	std::string b = b_in.substr(loc+offset);
 	
+	/**********************************
+	 * Process Operator
+	 */
+	// bitwise Ops
+	if(op == "^" || op == "~^" || op == "^~" || op == "&" || op == "~&" || op == "|" || op == "~|")
+	{
+		std::string result = "";
 
-	std::string result = "x";
-	bool result_sign = a_signed && b_signed;
-	size_t result_length = length;
+		long std_length = std::max(a_length, b_length);
+		std::string a = resize(a, std_length, a_signed);
+		std::string b = resize(b, std_length, b_signed);
 
-	if( op == "^" )
-	{
-		result = "0";
-		for(int i=0; i<=length; i++)
-			result[i] = v_xor(adj_a[i], adj_b[i]);
+		for(int i=std_length-1; i>=MSB; i--)
+		{
+			PUSH_MSB(result, 
+				/*reduction AND*/	(op == "&")		?	v_and(a[i], b[i])	:
+				/*reduction OR*/	(op == "|")		?	v_or(a[i], b[i])	:
+				/*reduction XOR*/	(op == "^")		?	v_xor(a[i], b[i])	:
+				/*reduction NAND*/	(op == "~&")	?	v_nand(a[i], b[i])	:
+				/*reduction NOR*/	(op == "~|")	?	v_nor(a[i], b[i])	:
+				/*reduction XNOR*/	(op == "~^")	?	v_xnor(a[i], b[i])	:
+				/*reduction XNOR*/	(op == "^~")	?	v_xnor(a[i], b[i])	:
+														bad_ops(op)
+			);
+		}
+		return v_bin_string(result, std_length, false);
 	}
-	else if( op == "~^" || op == "^~" )
+	// case equals are not picky with don't care
+	else if(op == "===" || op == "!==")
 	{
-		result = "0";
-		for(int i=0; i<=length; i++)
-			result[i] = v_xnor(adj_a[i], adj_b[i]);
-	}
-	else if( op == "&" )
-	{
-		result = "0";
-		for(int i=0; i<=length; i++)
-			result[i] = v_and(adj_a[i], adj_b[i]);
-	}
-	else if( op == "~&" )
-	{
-		result = "0";
-		for(int i=0; i<=length; i++)
-			result[i] = v_nand(adj_a[i], adj_b[i]);
-	}
-	else if( op == "|" )
-	{
-		result = "0";
-		for(int i=0; i<=length; i++)
-			result[i] = v_or(adj_a[i], adj_b[i]);
-	}
-	else if( op == "~|" )
-	{
-		result = "0";
-		for(int i=0; i<=length; i++)
-			result[i] = v_nor(adj_a[i], adj_b[i]);
-	}
-	else if( op == "&&" )
-	{
-		std::string res_a = arithmetic("|", a, a_length, a_signed);
-		std::string res_b = arithmetic("|", b, b_length, b_signed);
-		result = arithmetic(res_a, 1, false, "&", res_b, 1, false);
-		result_length = 1;
-		result_sign = false;
-	}
-	else if( op == "||" )
-	{
-		std::string res_a = arithmetic("|", a, a_length, a_signed);
-		std::string res_b = arithmetic("|", b, b_length, b_signed);
-		result = arithmetic(res_a, 1, false, "|", res_b, 1, false);
-		result_length = 1;
-		result_sign = false;
-	}
-	else if( op == "===" )
-	{
-		result = "1";
-		for(int i=0; i < length && result[0] == '1'; i++)
-			result[0] = (adj_a[i] == adj_b[i])? '1': '0';
-		result_length = 1;
-		result_sign = false;
-	}
-	else if( op == "!==" )
-	{
-		result = "0";
-		for(int i=0; i < length && result[0] == '0'; i++)
-			result[0] = (adj_a[i] != adj_b[i])? '1': '0';
-		result_length = 1;
-		result_sign = false;
-	}
+		char passing_value = ( op == "===" )? '1': '0';
+		std::string result(1,passing_value);
 
+		long std_length = std::max(a_length, b_length);
+		std::string a = resize(a, std_length, a_signed);
+		std::string b = resize(b, std_length, b_signed);
+
+		for(int i=std_length-1; i >= MSB && GET_MSB(result) == passing_value; i--)
+			SET_MSB(result, (a[i] == b[i])? '1': '0');
+
+		if( op == "!==" )
+			SET_MSB(result, (GET_MSB(result) == '0')? '1': '0');
+	}
+	// Shifts
 	else if( op == "<<" ||  op == "<<<" || op == ">>" || op == ">>>" )
 	{
-		if(!is_dont_care_string(adj_b))
+		if(!is_dont_care_string(b))
 		{
 			// flip the shift if signed integer
 			if(b_signed && b[b.length()-1] == '1')
 			{
-				std::string two_comp = arithmetic("-", b, b_length, b_signed);
+				std::string two_comp = arithmetic("-", v_bin_string(b, 0, true));
 				op =	(op == "<<<")	?	">>>"	:
 						(op == "<<")	?	">>"	:
 						(op == ">>>")	?	"<<<"	:
@@ -633,37 +737,44 @@ static std::string arithmetic(std::string a, size_t a_length, short a_signed, st
 			//these operation are limited to shift by the amount dictated by a long long 2^64 (doubt we will ever reach this!) 
 			unsigned long long shift_by = v_strtoull(b,2);
 			if( op == "<<" || op == "<<<")
-			{
-				// from 0 ... to n we are in big endian here
-				result = a + std::string('0',shift_by); 
-				result_length += shift_by;
-			}
+				return v_bin_string(a + std::string('0',shift_by), shift_by+a.length(), a_signed); 
 			else if(op == ">>")
-			{
-				result = std::string('0', shift_by) + a; 
-				result_length += shift_by;
-			}
+				return v_bin_string(std::string('0', shift_by) + a, shift_by+a.length(), a_signed); 
 			else /*if(op == ">>>" )*/
-			{
-				result = std::string(a[0], shift_by) + a; 
-				result_length += shift_by;
+				return v_bin_string(std::string(a[0], shift_by) + a, shift_by+a.length(), a_signed); 
 			}
 		}
 	}
-	else
+	else if (( op == "&&" || op == "||")
+	||( op == "<"  || op == ">" || op == "<=" || op == ">=" || op == "==" || op == "!=" )		
+	||( op == "+"  || op == "-" || op == "*"  || op == "**" )
+	||( op == "/"  || op == "%"))
 	{
 		/* dont care sensitive ops */
-		if(!is_dont_care_string(adj_a) && !is_dont_care_string(adj_b))
+		if(!is_dont_care_string(a) && !is_dont_care_string(b))
 		{
+			if(op == "&&" )
+			{
+				result = arithmetic(arithmetic("|", a_in), "&", arithmetic("|", b_in));
+			}
+			else if(op == "||" )
+			{
+				result = arithmetic(arithmetic("|", a_in), "|", arithmetic("|", b_in));
+			}
 			// todo signed int!!
-			if( op == "<" || op == ">" || op == "<=" || op == ">=" || op == "==" || op == "!=" )
+			else if( op == "<" || op == ">" || op == "<=" || op == ">=" || op == "==" || op == "!=" )
 			{
 				// -1 less, 0 equal, 1 greater
 				short condition_code = -1; 
-				for(int i=0; i < length && condition_code == 0; i++)
+
+				long std_length = std::max(a_length, b_length);
+				std::string a = resize(a, std_length, a_signed);
+				std::string b = resize(b, std_length, b_signed);
+
+				for(int i=std_length-1; i>=MSB && condition_code == 0; i--)
 				{
-					condition_code = 	(adj_a[i] == adj_b[i])	?	0	:
-										(adj_a[i] == '0')		?	-1	:
+					condition_code = 	(a[i] == b[i])	?	0	:
+										(a[i] == '0')		?	-1	:
 																	1	;
 				}
 				result_length = 1;
@@ -680,10 +791,14 @@ static std::string arithmetic(std::string a, size_t a_length, short a_signed, st
 			if( op == "+" )
 			{
 				char previous_carry = '0';
-				for(int i=length-1; i >= 0 ; i++)
+				long std_length = std::max(a_length, b_length);
+				std::string a = resize(a, std_length, a_signed);
+				std::string b = resize(b, std_length, b_signed);
+
+				for(int i=std_length-1; i>=MSB; i--)
 				{
-					result[i+1] = add_func(adj_a[i], adj_b[i], previous_carry);
-					previous_carry = carry_func(adj_a[i], adj_b[i], previous_carry);
+					result[i+1] = add_func(a[i], b[i], previous_carry);
+					previous_carry = carry_func(a[i], b[i], previous_carry);
 				}
 				result[0] = previous_carry;
 			
@@ -692,65 +807,57 @@ static std::string arithmetic(std::string a, size_t a_length, short a_signed, st
 			}
 			else if( op == "-" )
 			{
-				std::string neg_b = arithmetic("-", adj_b, length, true);
-				return arithmetic(adj_a, length, a_signed, "+", neg_b, length, true);
+				result = arithmetic(a_in, "+", arithmetic("-", b_in));
 			}
 			else if( op == "*" )
 			{
-				result = "0";
-				for(int i=length-1; i>=0; i++)
-				{
-					if(adj_a[i] == '1')
-					{
-						std::string shift_by = to_bitstring(std::to_string(i),10,sizeof(i)*8,false);
-						std::string shifted_result = arithmetic(adj_b, length, b_signed, "<<<", shift_by, DEFAULT_BIT_WIDTH, b_signed);
-						result = arithmetic(result, 2*(length+1), a_signed&&b_signed, "+", shifted_result, 2*(length+1), b_signed);
-					}
-				}
-
+				result = "\'sb0";
+				for(int i=a_in.length()-1; i >= MSB; i--)
+					if(a_in[i] == '1')
+						result = arithmetic(result, "+", arithmetic(b_in , "<<<", v_bin_string(to_bitstring(std::to_string(a_in.length()-1-i),10,0,false), 0, false)));
 			}
 			else if( op == "**" )
 			{
-				std::string result = "1";
-				while(arithmetic("|",adj_b, length, b_sign)
+				std::string result = "\'sb1";
+				while((b_in = arithmetic("|", b_in)) != "\'sb0" )
 				{
-					adj_b = arithmetic( adj_b, length, b_signed, "-", "1", 2, false);
-					result = arithmetic( result, length, true, "*", adj_a, length, true);
+					std::string eval_ge = arithmetic("|", b_in)
+					b_in = arithmetic("--", b_in);
+					result = arithmetic( result, length, true, "*", a, length, true);
 				}
 			}
-			//sensitive to division by zero
-			else if( '0' != arithmetic("|", adj_b, length, b_signed))
+			else if( op == "/" || op == "%" )
 			{
-
-				if( op == "/" || op == "%" )
+				//sensitive to division by zero
+				if( '0' != arithmetic("|", b, length, b_signed))
 				{
 					result = "0";
 					//TODO signed division!
-					while(arithmetic(adj_b, length, b_signed, "<", adj_a, length, a_signed) ) )
+					while(arithmetic(b, length, b_signed, "<", a, length, a_signed) ) )
 					{
 						std::string count = "1";
-						std::string sub_with = adj_b;
-						for( std::string tmp = sub_with; arithmetic(tmp, length, true, "<", adj_a, length, a_signed); arithmetic(tmp, length, true, "<<", "1", 2, true))
+						std::string sub_with = b;
+						for( std::string tmp = sub_with; arithmetic(tmp, length, true, "<", a, length, a_signed); arithmetic(tmp, length, true, "<<", "1", 2, true))
 						{
 							count = arithmetic( count, length, true, "<<", "1", 2, true);
 							sub_with = tmp;
 						}
-						adj_a = arithmetic( adj_a, length, a_signed, "-", sub_with, length, true);
+						a = arithmetic( a, length, a_signed, "-", sub_with, length, true);
 						result = arithmetic ( result, length, true, "+", count, length, true);
 					}
 					if( op == "%" )
 					{
-						result = adj_a;
+						result = a;
 					}
-				}
-				else
-				{
-					error_message(-1,-1,"Operator %s is invalid for binary operation", op);
 				}
 			}
 		}
 	}
-	return "";
+	else
+	{
+		error_message(-1,-1,"Operator %s is invalid for binary operation", op);
+	}
+	return v_bin_string(result, result_length, result_sign);
 }
 
 /***
@@ -758,35 +865,318 @@ static std::string arithmetic(std::string a, size_t a_length, short a_signed, st
  *     |  |__  |__) |\ |  /\  |__) \ /    /  \ |__) |__  |__)  /\   |  | /  \ |\ | 
  *     |  |___ |  \ | \| /~~\ |  \  |     \__/ |    |___ |  \ /~~\  |  | \__/ | \| 
  *                                                                                 
- */
-
-/**
- * The  evaluation  of  a  conditional  operator  shall  begin  with  a  logical  equality  comparison  (see  
-5.1.8
-)  of
-expression1 with zero, termed the 
-condition
-. If the condition evaluates to fa
-lse (0), then expression3 shall be
-evaluated  and  used  as  the  result  of  the  conditional  e
-xpression.  If  the  condition  evaluates  to  true  (1),  then
-expression2 is evaluated and used as the result. 
-If the condition evaluates to an ambiguous value (
-x
- or 
-z
-),
-then  both  expression2  and  expression3  shall  be  evaluated;  and  their  results  shall  be  combined,  bit  by  bit,
-using 
-Table 5-21
-  to  calculate  the  final  result  unless  expressi
-on2  or  expression3  is  real,  in  which  case  the
-result  shall  be  
-0
-.  If  the  lengths  of  expression2  and  expressi
-on3  are  different,  the  shorter  operand  shall  be
-lengthened to match the long
-er and zero-filled from the le
-ft (the high-order end)
+	The  evaluation  of  a  conditional  operator  shall  begin  with  a  logical  equality  comparison
+	of expression1 with zero, termed the condition. If the condition evaluates to false (0), then expression3 shall be
+	evaluated  and  used  as  the  result  of  the  conditional  expression.  If  the  condition  evaluates  to  true  (1),  then
+	expression2 is evaluated and used as the result. If the condition evaluates to an ambiguous value (x or z),
+	then  both  expression2  and  expression3  shall  be  evaluated;  and  their  results  shall  be  combined,  bit  by  bit,
+	using Table 5-21 to  calculate  the  final  result  unless  expression2  or  expression3  is  real,  in  which  case  the
+	result  shall  be  0.  If  the  lengths  of  expression2  and  expression3  are  different,  the  shorter  operand  shall  be
+	lengthened to match the longer and zero-filled from the left (the high-order end)
 */
 
+static std::string V_TERNARY(std::string a_bits, bool a_sign, long a_len, std::string b_bits, bool b_sign, long b_len, std::string c_bits, bool c_sign, long c_len)
+{
+	/*	if a evaluates properly	*/
+	if(a_bits == '1')
+		return b;
+	else if(a_bits == '0')
+		return c; 
+
+	/* get B */
+	offset = 0
+	loc = b.find("\'");
+	long b_length = (loc == 0)? DEFAULT_BIT_WIDTH: v_strtoull(b.substr(0,loc),2);
+
+	offset++;// skip " ' "
+	if(std::tolower(b[loc+offset]) == 's')
+		offset ++; //skip " s "
+
+	offset++; // skip  " [ b, o, d, h ] "
+	std::string a = b.substr(loc+offset);
+
+	/* get C */
+	offset = 0
+	loc = c.find("\'");
+	long c_length = (loc == 0)? DEFAULT_BIT_WIDTH: v_strtoull(c.substr(0,loc),2);
+
+	offset++;// skip " ' "
+	if(std::tolower(b[loc+offset]) == 's')
+		offset ++; //skip " s "
+
+	offset++; // skip  " [ b, o, d, h ] "
+	std::string c = c.substr(loc+offset);
+
+
+	std::string result = "x";
+	long std_length = std::max(std::max(b_length, c_length);
+	bool result_sign = false;
+
+	std::string b = resize(b, std_length, result_sign);
+	std::string c = resize(c, std_length, result_sign);
+
+	for(int i=std_length-1; i>=MSB; i--)
+		result[i] = v_ternary(b[i], c[i]);
+
+	return v_bin_string(result, result_length, result_sign);
+}
+
+
+/***
+ *     __   __       ___  __   __           ___       __       
+ *    /  ` /  \ |\ |  |  |__) /  \ |       |__  |    /  \ |  | 
+ *    \__, \__/ | \|  |  |  \ \__/ |___    |    |___ \__/ |/\| 
+ *                                                             
+ */
+
+static std::string arithmetic(std::string op, std::string a_in)
+{
+	/**********************************
+	 * Gather input 
+	 */
+	int offset = 0;
+	auto loc = a_in.find("\'");
+	long a_length = (loc == 0)? DEFAULT_BIT_WIDTH: v_strtoull(a_in.substr(0,loc), 2);
+	bool a_signed = false;
+
+	offset++;// skip " ' "
+	if(std::tolower(a[loc+offset]) == 's')
+	{
+		a_signed = true;
+		offset ++; //skip " s "
+	}
+	offset++; // skip  " [ b, o, d, h ] "
+	std::string a = a_in.substr(loc+offset);
+
+	/**********************************
+	 * return Process Operator via ternary
+	 */
+	return	v_bin_string(	(op == "~")		?		V_NEG(a, a_signed, a_length):
+							(op == "-")		?		V_MINUS(a, a_signed, a_length):
+							(op == "+")		?		V_ADD(a, a_signed, a_length):
+							(op == "++")	?		V_PLUS_PLUS(a, a_signed, a_length):
+							(op == "--")	?		V_MINUS_MINUS(a, a_signed, a_length):
+							(op == "&")		?		V_REDUCTION_AND(a, a_signed, a_length):
+							(op == "|")		?		V_REDUCTION_OR(a, a_signed, a_length):
+							(op == "^")		?		V_REDUCTION_XOR(a, a_signed, a_length):
+							(op == "~&")	?		V_REDUCTION_NAND(a, a_signed, a_length):
+							(op == "~|")	?		V_REDUCTION_NOR(a, a_signed, a_length):
+							(op == "~^"	
+							|| op == "~^")	?		V_REDUCTION_XNOR(a, a_signed, a_length):
+							(op == "!")		?		V_LOGICAL_NOT(a, a_signed, a_length):
+													bad_ops(op));
+
+}
+
+static std::string arithmetic(std::string a_in, std::string op, std::string b_in)
+{
+
+	/**********************************
+	 * Gather input 
+	 */
+
+	/* get A */
+	int offset = 0;
+	auto loc = a_in.find("\'");
+	long a_length = (loc == 0)? DEFAULT_BIT_WIDTH: v_strtoull(a_in.substr(0,loc),2);
+	bool a_signed = false;
+
+	offset++;// skip " ' "
+	if(std::tolower(a_in[loc+offset]) == 's')
+	{
+		a_signed = true;
+		offset ++; //skip " s "
+	}
+	offset++; // skip  " [ b, o, d, h ] "
+	std::string a = a_in.substr(loc+offset);
+
+	/* get B */
+	offset = 0;
+	loc = b_in.find("\'");
+	long b_length = (loc == 0)? DEFAULT_BIT_WIDTH: v_strtoull(b_in.substr(0,loc), 2);
+	bool b_signed = false;
+
+	offset++;// skip " ' "
+	if(std::tolower(b_in[loc+offset]) == 's')
+	{
+		b_signed = true;
+		offset ++; //skip " s "
+	}
+	offset++; // skip  " [ b, o, d, h ] "
+	std::string b = b_in.substr(loc+offset);
+	
+	/**********************************
+	 * return Process Operator via ternary
+	 */
+	return	(op == "~")		?		V_NEG(a, a_signed, a_length):
+			(op == "-")		?		V_MINUS(a, a_signed, a_length):
+			(op == "+")		?		V_ADD(a, a_signed, a_length):
+			(op == "++")	?		V_PLUS_PLUS(a, a_signed, a_length):
+			(op == "--")	?		V_MINUS_MINUS(a, a_signed, a_length):
+			(op == "&")		?		V_REDUCTION_AND(a, a_signed, a_length):
+			(op == "|")		?		V_REDUCTION_OR(a, a_signed, a_length):
+			(op == "^")		?		V_REDUCTION_XOR(a, a_signed, a_length):
+			(op == "~&")	?		V_REDUCTION_NAND(a, a_signed, a_length):
+			(op == "~|")	?		V_REDUCTION_NOR(a, a_signed, a_length):
+			(op == "~^"	
+			|| op == "~^")	?		V_REDUCTION_XNOR(a, a_signed, a_length):
+			(op == "!")		?		V_LOGICAL_NOT(a, a_signed, a_length):
+									bad_ops(op);
+
+
+
+
+
+
+
+
+	// bitwise Ops
+	if(op == "^" || op == "~^" || op == "^~" || op == "&" || op == "~&" || op == "|" || op == "~|")
+	{
+
+	}
+	// case equals are not picky with don't care
+	else if(op == "===" || op == "!==")
+	{
+
+	}
+	// Shifts
+	else if( op == "<<" ||  op == "<<<" || op == ">>" || op == ">>>" )
+	{
+		if(!is_dont_care_string(b))
+		{
+			// flip the shift if signed integer
+			if(b_signed && b[b.length()-1] == '1')
+			{
+				std::string two_comp = arithmetic("-", v_bin_string(b, 0, true));
+				op =	(op == "<<<")	?	">>>"	:
+						(op == "<<")	?	">>"	:
+						(op == ">>>")	?	"<<<"	:
+						/*(op == ">>")	?*/	"<<"	;
+			}
+
+			unsigned long long shift_by = v_strtoull(b,2);
+			if( op == "<<" || op == "<<<")
+			else if(op == ">>")
+			else /*if(op == ">>>" )*/
+			}
+		}
+	}
+	else if (( op == "&&" || op == "||")
+	||( op == "<"  || op == ">" || op == "<=" || op == ">=" || op == "==" || op == "!=" )		
+	||( op == "+"  || op == "-" || op == "*"  || op == "**" )
+	||( op == "/"  || op == "%"))
+	{
+		/* dont care sensitive ops */
+		if(!is_dont_care_string(a) && !is_dont_care_string(b))
+		{
+			if(op == "&&" )
+			{
+			}
+			else if(op == "||" )
+			{
+			}
+			// todo signed int!!
+			else if( op == "<" || op == ">" || op == "<=" || op == ">=" || op == "==" || op == "!=" )
+			{
+
+			}
+
+			if( op == "+" )
+			{
+
+			}
+			else if( op == "-" )
+			{
+
+			}
+			else if( op == "*" )
+			{
+
+			}
+			else if( op == "**" )
+			{
+
+			}
+			else if( op == "/" || op == "%" )
+			{
+				//sensitive to division by zero
+				if( '0' != arithmetic("|", b, length, b_signed))
+				{
+
+				}
+			}
+		}
+	}
+	else
+	{
+		error_message(-1,-1,"Operator %s is invalid for binary operation", op);
+	}
+
+
+
+
+
+
+
+}
+
+static std::string arithmetic(std::string a_in, std::string op1 ,std::string b_in, std::string op2, std::string c_in)
+{
+
+	/**********************************
+	 * Gather input 
+	 */
+
+	/* get A */
+	int offset = 0;
+	auto loc = a_in.find("\'");
+	long a_length = (loc == 0)? DEFAULT_BIT_WIDTH: v_strtoull(a_in.substr(0,loc),2);
+	bool a_signed = false;
+
+	offset++;// skip " ' "
+	if(std::tolower(a_in[loc+offset]) == 's')
+	{
+		a_signed = true;
+		offset ++; //skip " s "
+	}
+	offset++; // skip  " [ b, o, d, h ] "
+	std::string a = a_in.substr(loc+offset);
+
+	/* get B */
+	offset = 0;
+	loc = b_in.find("\'");
+	long b_length = (loc == 0)? DEFAULT_BIT_WIDTH: v_strtoull(b_in.substr(0,loc), 2);
+	bool b_signed = false;
+
+	offset++;// skip " ' "
+	if(std::tolower(b_in[loc+offset]) == 's')
+	{
+		b_signed = true;
+		offset ++; //skip " s "
+	}
+	offset++; // skip  " [ b, o, d, h ] "
+	std::string b = b_in.substr(loc+offset);
+
+	/* get C */
+	offset = 0;
+	loc = c_in.find("\'");
+	long c_length = (loc == 0)? DEFAULT_BIT_WIDTH: v_strtoull(c_in.substr(0,loc), 2);
+	bool c_signed = false;
+
+	offset++;// skip " ' "
+	if(std::tolower(c_in[loc+offset]) == 's')
+	{
+		c_signed = true;
+		offset ++; //skip " s "
+	}
+	offset++; // skip  " [ b, o, d, h ] "
+	std::string c = c_in.substr(loc+offset);
+	
+	/**********************************
+	 * return Process Operator via ternary
+	 */
+	return	(op1 == "?"
+			&& op2 == ":")		?	V_TERNARY(a, a_signed, a_length, b, b_signed, b_length, c, c_signed, c_length,):
+									bad_ops(op);
+}

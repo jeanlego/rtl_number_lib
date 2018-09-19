@@ -4,8 +4,6 @@ class rtl_int
 {
 
 private:
-    int binary_limit;
-    bool signed_int;
     std::string binary_number;
     std::string original_number;
 
