@@ -64,23 +64,26 @@ inline static char _bad_bit_string(std::string test, const char *FUNCT, int LINE
 #define V_UNK return_internal_representation(false,1,"x")
 #define V_BAD return_internal_representation(true,0,"xx0x00x0x0x0x0x0x0x0x0x")					
 
-bool cont(std::string input, std::string list, bool not_one_of)
+inline static bool cont(std::string input, std::string list, bool not_one_of)
 {
-	for(int i=0; i < input.length(); i ++)
-		for(int j =0; j <= list.length(); j ++)
+	for(std::size_t i=0; i < input.length(); i ++)
+		for(std::size_t j =0; j <= list.length(); j ++)
 			if(j == list.length())
-				if(not_one_of) return false; 
-				else break;
-			else if(std::tolower(input[i]) == std::tolower(list[i]))				
-				if(not_one_of) break; 
-				else true;
+			{
+				if(not_one_of) 	return false; 
+				else 			break;
+			}else if(std::tolower(input[i]) == std::tolower(list[i])){			
+				if(not_one_of) 	break; 
+				else 			return true;
+			}
+
 	return (not_one_of)? true: false;
 }
 
 
 inline static bool is_dont_care_string(std::string input)
 {
-	return cont(input, "xz",false);
+	return cont(input, " xz",false);
 }
 
 inline static bool is_string_of_radix(std::string input, std::size_t radix)
@@ -183,7 +186,7 @@ inline static std::vector<std::string> readjust_size(std::vector<std::string> in
 	return resize(internal_bit_struct, get_len(internal_bit_struct));
 }
 
-static std::string to_bitstring(std::string orig_string, int radix)
+static std::string to_bitstring(std::string orig_string, std::size_t radix)
 {
 	std::string result = "";	
 	if(!is_string_of_radix(orig_string,radix))
