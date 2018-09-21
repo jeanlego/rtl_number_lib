@@ -9,6 +9,10 @@
 
 // this sets the default bit width
 #define DEFAULT_BIT_WIDTH 64
+#define BRK brk_pt();
+static void brk_pt(){
+	return;
+}
 
 /***
  *     ___  __   __   __   __      __   ___  __   __   __  ___         __  
@@ -16,7 +20,7 @@
  *    |___ |  \ |  \ \__/ |  \    |  \ |___ |    \__/ |  \  |  | | \| \__> 
  *                                                                         
  */
-inline static std::vector<std::string> return_internal_representation(bool sign, std::size_t length, std::string bitstring)
+static std::vector<std::string> return_internal_representation(bool sign, std::size_t length, std::string bitstring)
 {
 	std::vector<std::string> to_return;
 	to_return.push_back((sign)?"1":"0");
@@ -26,24 +30,17 @@ inline static std::vector<std::string> return_internal_representation(bool sign,
 }
 
 #define bad_value(test) _bad_value(static_cast<char>(std::tolower(test)), __func__, __LINE__); std::abort()
-inline static char _bad_value(char test, const char *FUNCT, int LINE)	
+static char _bad_value(char test, const char *FUNCT, int LINE)	
 {	
-	std::clog << "INVALID BIT INPUT: (" << std::string(1,test) << ")@" << FUNCT << "::" << std::to_string(LINE) << std::endl;	
+	std::cout << "INVALID BIT INPUT: (" << std::string(1,test) << ")@" << FUNCT << "::" << std::to_string(LINE) << std::endl;	
 	return 'x'; 
 }
 
 #define bad_ops(test) _bad_ops(test, __func__, __LINE__)
-inline static std::vector<std::string> _bad_ops(std::string test, const char *FUNCT, int LINE)	
+static std::vector<std::string> _bad_ops(std::string test, const char *FUNCT, int LINE)	
 {	
-	std::clog << "INVALID INPUT OPS: (" << test << ")@" << FUNCT << "::" << std::to_string(LINE) << std::endl;		
+	std::cout << "INVALID INPUT OPS: (" << test << ")@" << FUNCT << "::" << std::to_string(LINE) << std::endl;		
 	return return_internal_representation(false,0,"xxxxxxxxxxxxxxx"); 
-}
-
-#define bad_bit_string(test) _bad_bit_string(test, __func__, __LINE__); std::abort()
-inline static char _bad_bit_string(std::string test, const char *FUNCT, int LINE)	
-{	
-	std::clog << "INVALID INPUT BITSTRING: (" << test << ")@" << FUNCT << "::" << std::to_string(LINE) << std::endl;		
-	return 'x'; 
 }
 
 /***
@@ -62,82 +59,63 @@ inline static char _bad_bit_string(std::string test, const char *FUNCT, int LINE
 #define V_ZERO return_internal_representation(false,1,"0")
 #define V_ONE return_internal_representation(false,1,"1")
 #define V_UNK return_internal_representation(false,1,"x")
-#define V_BAD return_internal_representation(true,0,"xx0x00x0x0x0x0x0x0x0x0x")					
+#define V_BAD return_internal_representation(true,0,"xx0x00x0x0x0x0x0x0x0x0x")
 
-inline static bool cont(std::string input, std::string list, bool not_one_of)
+#define is_dont_care_string(input) (input.find("xXzZ") != std::string::npos)
+
+#define assert_string_of_radix(input, radix) _assert_string_of_radix(input, radix, __func__,__LINE__)
+static void _assert_string_of_radix(std::string input, std::size_t radix, const char *FUNCT, int LINE)
 {
-	for(std::size_t i=0; i < input.length(); i ++)
-		for(std::size_t j =0; j <= list.length(); j ++)
-			if(j == list.length())
-			{
-				if(not_one_of) 	return false; 
-				else 			break;
-			}else if(std::tolower(input[i]) == std::tolower(list[i])){			
-				if(not_one_of) 	break; 
-				else 			return true;
-			}
-
-	return (not_one_of)? true: false;
-}
-
-
-inline static bool is_dont_care_string(std::string input)
-{
-	return cont(input, " xz",false);
-}
-
-inline static bool is_string_of_radix(std::string input, std::size_t radix)
-{
+	BRK
+	bool pass = false;
 	switch(radix)
 	{
-		case 2:		return cont(input, " xz01", true);
-		case 8:		return cont(input, " xz01234567", true);
-		case 10:	return cont(input, " 0123456789", true);
-		case 16:	return cont(input, " xz0123456789abcdef", true);
-		default:	return false;
+		case 2:		pass = (input.find_first_not_of("xXzZ01") == std::string::npos);						break;
+		case 8:		pass = (input.find_first_not_of("xXzZ01234567") == std::string::npos);					break;
+		case 10:	pass = (input.find_first_not_of("0123456789") == std::string::npos);					break;
+		case 16:	pass = (input.find_first_not_of("xZzZ0123456789aAbBcCdDeEfF") == std::string::npos);	break;
+		default:	pass = false;	break;	
+	}
+	if(!pass)
+	{
+		std::cout << "Invalid bitstring of radix input " << std::to_string(radix) << " number: " << input << " @" << FUNCT << "::" << std::to_string(LINE) << std::endl;
+		std::abort();
 	}
 }
 
 #define v_strtoul(num,radix) _v_strtoul(num,radix,__func__, __LINE__)
-inline static std::size_t _v_strtoul(std::string orig_number, std::size_t radix, const char *FUNCT, int LINE)
+static std::size_t _v_strtoul(std::string orig_number, std::size_t radix, const char *FUNCT, int LINE)
 {
+	BRK
 	std::size_t result = 0;
-	if (is_string_of_radix(orig_number, radix))
+	assert_string_of_radix(orig_number, radix);
+	if (is_dont_care_string(orig_number))
 	{
-		if (!is_dont_care_string(orig_number))
-		{
-			if( orig_number.length() < (sizeof(long)*8) )
-			{
-				for(std::size_t i=MSB; i < orig_number.length(); i++) {
-					std::size_t bit = static_cast<std::size_t>(orig_number[i]);
-					if(bit >= '0' && bit <= '9' )		result = (result * radix) +(bit - static_cast<std::size_t>('0'));
-					else if(bit >= 'a' && bit <= 'f')	result = (result * radix) +(bit - static_cast<std::size_t>('a') + 10);
-					else if(bit >= 'A' && bit <= 'F')	result = (result * radix) +(bit - static_cast<std::size_t>('A') + 10);
-				}
-			}
-			else
-			{
-				std::cout << "Invalid Number. Too large to be converted. number: " << orig_number << " upper limit: " << std::to_string((sizeof(long)*8)) << " @" << FUNCT << "::" << std::to_string(LINE) << std::endl;
-				std::abort();
-			}
-		}
-		else
-		{
-			std::cout << "Invalid Number contains dont care values. number: " << orig_number << " @" << FUNCT << "::" << std::to_string(LINE) << std::endl;
-			std::abort();
-		}
-	}	
-	else
-	{
-		std::cout << "Invalid base " << std::to_string(radix) << " number: " << orig_number << " @" << FUNCT << "::" << std::to_string(LINE) << std::endl;
+		std::cout << "Invalid Number contains dont care values. number: " << orig_number << " @" << FUNCT << "::" << std::to_string(LINE) << std::endl;
 		std::abort();
 	}
-	return result;
+	else if( orig_number.length() >= (sizeof(long)*8) )
+	{
+		std::cout << "Invalid Number. Too large to be converted. number: " << orig_number << " upper limit: " << std::to_string((sizeof(long)*8)) << " @" << FUNCT << "::" << std::to_string(LINE) << std::endl;
+		std::abort();
+	}
+	
+	return std::strtoul(orig_number.c_str(),NULL,radix);
+
+	// for(std::size_t i=MSB; i < orig_number.length(); i++) {
+	// 	std::size_t bit = static_cast<std::size_t>(orig_number[i]);
+	// 	if(bit >= '0' && bit <= '9' )		result = (result * radix) +(bit - static_cast<std::size_t>('0'));
+	// 	else if(bit >= 'a' && bit <= 'f')	result = (result * radix) +(bit - static_cast<std::size_t>('a') + 10);
+	// 	else if(bit >= 'A' && bit <= 'F')	result = (result * radix) +(bit - static_cast<std::size_t>('A') + 10);
+	// }
+
+	// return result;
 }
 
 #define get_len(internal_bit_struct) _get_len(internal_bit_struct, __func__, __LINE__)
-inline static std::size_t _get_len(std::vector<std::string> internal_bit_struct, const char *FUNCT, int LINE)
+static std::size_t _get_len(std::vector<std::string> internal_bit_struct, const char *FUNCT, int LINE)
 {
+	BRK
 	std::size_t defined_size = _v_strtoul(internal_bit_struct[1],10, FUNCT, LINE);
 	std::size_t current_bit_width = internal_bit_struct[2].length();
 
@@ -148,8 +126,9 @@ inline static std::size_t _get_len(std::vector<std::string> internal_bit_struct,
 }
 
 #define get_bit(int_bits, location) _get_bit(int_bits, location, __func__, __LINE__)
-inline static char _get_bit(std::vector<std::string> internal_bit_struct, std::size_t location, const char *FUNCT, int LINE)
+static char _get_bit(std::vector<std::string> internal_bit_struct, std::size_t location, const char *FUNCT, int LINE)
 {
+	BRK
 	if(location >= get_len(internal_bit_struct))
 	{
 		std::clog << "INVALID INPUT BITSTRING INDEX: (" << std::to_string(location) << ")@" << FUNCT << "::" << std::to_string(LINE) << std::endl;	
@@ -159,13 +138,15 @@ inline static char _get_bit(std::vector<std::string> internal_bit_struct, std::s
 }
 
 #define is_signed(bits)	(bits[0] == "0")? 0 : 1
-inline static std::vector<std::string> set_sign(std::vector<std::string> internal_binaries, bool new_sign)
+static std::vector<std::string> set_sign(std::vector<std::string> internal_binaries, bool new_sign)
 {
+	BRK
 	return return_internal_representation(new_sign && is_signed(internal_binaries), v_strtoul(internal_binaries[1],10), internal_binaries[2]);
 }
 
-inline static std::vector<std::string> resize(std::vector<std::string> internal_bit_struct, std::size_t len)
+static std::vector<std::string> resize(std::vector<std::string> internal_bit_struct, std::size_t len)
 {
+	BRK
 	//expand to length
 	if(len > get_len(internal_bit_struct))
 	{
@@ -181,17 +162,17 @@ inline static std::vector<std::string> resize(std::vector<std::string> internal_
 }
 
 //resize bitstring to its own length
-inline static std::vector<std::string> readjust_size(std::vector<std::string> internal_bit_struct)
+static std::vector<std::string> readjust_size(std::vector<std::string> internal_bit_struct)
 {
+	BRK
 	return resize(internal_bit_struct, get_len(internal_bit_struct));
 }
 
 static std::string to_bitstring(std::string orig_string, std::size_t radix)
 {
+	BRK
 	std::string result = "";	
-	if(!is_string_of_radix(orig_string,radix))
-		bad_bit_string(orig_string);
-
+	assert_string_of_radix(orig_string,radix);
 	while(orig_string != "")
 	{
 		switch(radix)
@@ -308,8 +289,9 @@ static std::string to_bitstring(std::string orig_string, std::size_t radix)
 //resize bitstring to length
 
 
-inline static std::vector<std::string> standardize_input(std::string input_number)
+static std::vector<std::string> standardize_input(std::string input_number)
 {	
+	BRK
 	//remove underscores
 	std::cout << "pre-processing input: " << input_number << std::endl;
 	input_number.erase(std::remove(input_number.begin(), input_number.end(), '_'), input_number.end());
@@ -359,12 +341,13 @@ inline static std::vector<std::string> standardize_input(std::string input_numbe
 }
 
 // convert internal format to verilog
-inline static std::string v_bin_string(std::vector<std::string> internal_binary_number)
+static std::string v_bin_string(std::vector<std::string> internal_binary_number)
 {
+	BRK
 	//final resize
 	readjust_size(internal_binary_number);
 
-	std::string output = "b\'";
+	std::string output = "";
 
 	if(internal_binary_number[1] != "0")
 		output += internal_binary_number[1];
@@ -395,7 +378,7 @@ inline static std::string v_bin_string(std::vector<std::string> internal_binary_
 #define REF_z 3
 
 #define v_unary_op(a,op) _v_unary_op(a, op, __func__, __LINE__)
-inline static char _v_unary_op(const char a, const char lut[4], const char *FUNCT, int LINE) 
+static char _v_unary_op(const char a, const char lut[4], const char *FUNCT, int LINE) 
 {
 	return 	((a) == '0')				?	lut[REF_0] :
 			((a) == '1')				?	lut[REF_1] :
@@ -406,7 +389,7 @@ inline static char _v_unary_op(const char a, const char lut[4], const char *FUNC
 }
 
 #define v_binary_op(a,b,op)	_v_binary_op(a, b, op, __func__, __LINE__)
-inline static char _v_binary_op(const char a, const char b, const char lut[4][4], const char *FUNCT, int LINE) 
+static char _v_binary_op(const char a, const char b, const char lut[4][4], const char *FUNCT, int LINE) 
 {
 	return 	((a) == '0')				? 	_v_unary_op(b, lut[REF_0], FUNCT, LINE)	:
 			((a) == '1')				? 	_v_unary_op(b, lut[REF_1], FUNCT, LINE) :
@@ -563,7 +546,7 @@ static const char l_ternary[4][4] = {
 #define add_func(a, b, carry)	v_xor(v_xor(a,b),carry)
 #define carry_func(a, b, carry)	v_or(v_and(a,b),v_and(v_xor(a,b),carry))
 
-inline static int internal_quick_eval(std::vector<std::string> a,std::vector<std::string> b)
+static int internal_quick_eval(std::vector<std::string> a,std::vector<std::string> b)
 {
 	// -1 less, 0 equal, 1 greater
 	short condition_code = -1; 
@@ -581,7 +564,7 @@ inline static int internal_quick_eval(std::vector<std::string> a,std::vector<std
 	return condition_code;
 }
 
-inline static std::vector<std::string> V_REDUX(std::vector<std::string> a, const char lut[4][4])
+static std::vector<std::string> V_REDUX(std::vector<std::string> a, const char lut[4][4])
 {
 	std::size_t end = get_len(a)-1;
 	char result = get_bit(a, end);
@@ -591,7 +574,7 @@ inline static std::vector<std::string> V_REDUX(std::vector<std::string> a, const
 	return return_internal_representation(false, 1, std::string(1,result));
 }
 
-inline static std::vector<std::string> V_REDUX(std::vector<std::string> a, std::vector<std::string> b, const char lut[4][4])
+static std::vector<std::string> V_REDUX(std::vector<std::string> a, std::vector<std::string> b, const char lut[4][4])
 {
 	std::string result = "";
 	std::size_t std_length = size_max(get_len(a), get_len(b));
@@ -604,7 +587,7 @@ inline static std::vector<std::string> V_REDUX(std::vector<std::string> a, std::
 	return return_internal_representation(false, std_length, result);
 }
 
-inline static std::vector<std::string> V_INCREMENT(std::vector<std::string> a, const char lut_adder[4][4], const char lut_carry[4][4])
+static std::vector<std::string> V_INCREMENT(std::vector<std::string> a, const char lut_adder[4][4], const char lut_carry[4][4])
 {
 	std::string result = "";
 	char tmp_carry  = '0';
@@ -624,7 +607,7 @@ inline static std::vector<std::string> V_INCREMENT(std::vector<std::string> a, c
  *                                                                        
  */
 
-inline static std::vector<std::string> V_NEG(std::vector<std::string> a)
+static std::vector<std::string> V_NEG(std::vector<std::string> a)
 {
 	std::string result = "";
 	std::size_t std_length = get_len(a);
@@ -634,57 +617,57 @@ inline static std::vector<std::string> V_NEG(std::vector<std::string> a)
 	return return_internal_representation(false, 1, result);
 }
 
-inline static std::vector<std::string> V_PLUS_PLUS(std::vector<std::string> a)
+static std::vector<std::string> V_PLUS_PLUS(std::vector<std::string> a)
 {
 	return V_INCREMENT(a, l_xor, l_and);
 }
 
-inline static std::vector<std::string>  V_MINUS_MINUS(std::vector<std::string> a)
+static std::vector<std::string>  V_MINUS_MINUS(std::vector<std::string> a)
 {
 	return V_INCREMENT(a, l_xnor, l_or);
 }
 
-inline static std::vector<std::string> V_ADD(std::vector<std::string> a)
+static std::vector<std::string> V_ADD(std::vector<std::string> a)
 {
 	return a;
 }
 
-inline static std::vector<std::string> V_MINUS(std::vector<std::string> a)
+static std::vector<std::string> V_MINUS(std::vector<std::string> a)
 {
 	return V_PLUS_PLUS(V_NEG(a));
 }
 
-inline static std::vector<std::string> V_REDUCTION_AND(std::vector<std::string> a)
+static std::vector<std::string> V_REDUCTION_AND(std::vector<std::string> a)
 {
 	return V_REDUX(a, l_and);
 }
 
-inline static std::vector<std::string> V_REDUCTION_OR(std::vector<std::string> a)
+static std::vector<std::string> V_REDUCTION_OR(std::vector<std::string> a)
 {
 	return V_REDUX(a, l_or);	
 }
 
-inline static std::vector<std::string> V_REDUCTION_XOR(std::vector<std::string> a)
+static std::vector<std::string> V_REDUCTION_XOR(std::vector<std::string> a)
 {
 	return V_REDUX(a, l_xor);
 }
 
-inline static std::vector<std::string> V_REDUCTION_NAND(std::vector<std::string> a)
+static std::vector<std::string> V_REDUCTION_NAND(std::vector<std::string> a)
 {
 	return V_REDUX(a, l_nand);
 }
 
-inline static std::vector<std::string> V_REDUCTION_NOR(std::vector<std::string> a)
+static std::vector<std::string> V_REDUCTION_NOR(std::vector<std::string> a)
 {
 	return V_REDUX(a, l_nor);
 }
 
-inline static std::vector<std::string> V_REDUCTION_XNOR(std::vector<std::string> a)
+static std::vector<std::string> V_REDUCTION_XNOR(std::vector<std::string> a)
 {
 	return V_REDUX(a, l_xnor);
 }
 
-inline static std::vector<std::string> V_LOGICAL_NOT(std::vector<std::string> a)
+static std::vector<std::string> V_LOGICAL_NOT(std::vector<std::string> a)
 {
 	return V_REDUCTION_NOR(a);
 }
@@ -696,108 +679,108 @@ inline static std::vector<std::string> V_LOGICAL_NOT(std::vector<std::string> a)
  *                                                                          
  */
 
-inline static std::vector<std::string> V_REDUCTION_AND(std::vector<std::string> a,std::vector<std::string> b)
+static std::vector<std::string> V_REDUCTION_AND(std::vector<std::string> a,std::vector<std::string> b)
 {
 	return V_REDUX(a,b,l_and);
 }
 
-inline static std::vector<std::string> V_REDUCTION_OR(std::vector<std::string> a,std::vector<std::string> b)
+static std::vector<std::string> V_REDUCTION_OR(std::vector<std::string> a,std::vector<std::string> b)
 {
 	return V_REDUX(a,b,l_or);
 }
 
-inline static std::vector<std::string> V_REDUCTION_XOR(std::vector<std::string> a,std::vector<std::string> b)
+static std::vector<std::string> V_REDUCTION_XOR(std::vector<std::string> a,std::vector<std::string> b)
 {
 	return V_REDUX(a,b,l_xor);
 }
 
-inline static std::vector<std::string> V_REDUCTION_NAND(std::vector<std::string> a,std::vector<std::string> b)
+static std::vector<std::string> V_REDUCTION_NAND(std::vector<std::string> a,std::vector<std::string> b)
 {
 	return V_REDUX(a,b,l_nand);
 }
 
-inline static std::vector<std::string> V_REDUCTION_NOR(std::vector<std::string> a,std::vector<std::string> b)
+static std::vector<std::string> V_REDUCTION_NOR(std::vector<std::string> a,std::vector<std::string> b)
 {
 	return V_REDUX(a,b,l_nor);
 }
 
-inline static std::vector<std::string> V_REDUCTION_XNOR(std::vector<std::string> a,std::vector<std::string> b)
+static std::vector<std::string> V_REDUCTION_XNOR(std::vector<std::string> a,std::vector<std::string> b)
 {
 	return V_REDUX(a,b,l_xnor);
 }
 
-inline static std::vector<std::string> V_CASE_EQUAL(std::vector<std::string> a,std::vector<std::string> b)
+static std::vector<std::string> V_CASE_EQUAL(std::vector<std::string> a,std::vector<std::string> b)
 {
 	return return_internal_representation(false, 1, (internal_quick_eval(a,b) == 0)? "1": "0");
 }
-inline static std::vector<std::string> V_CASE_NOT_EQUAL(std::vector<std::string> a,std::vector<std::string> b)
+static std::vector<std::string> V_CASE_NOT_EQUAL(std::vector<std::string> a,std::vector<std::string> b)
 {
 	return return_internal_representation(false, 1, (internal_quick_eval(a,b) != 0)? "1": "0");
 }
 
-inline static std::vector<std::string> V_SIGNED_SHIFT_LEFT(std::vector<std::string> a, std::size_t b)
+static std::vector<std::string> V_SIGNED_SHIFT_LEFT(std::vector<std::string> a, std::size_t b)
 {
 	get_bitstring(a).append(std::string(b,'0'));
 	return readjust_size(a); 
 }
 
-inline static std::vector<std::string> V_SIGNED_SHIFT_RIGHT(std::vector<std::string> a, std::size_t b)
+static std::vector<std::string> V_SIGNED_SHIFT_RIGHT(std::vector<std::string> a, std::size_t b)
 {
 	get_bitstring(a) = get_bitstring(a).substr(0,get_len(a)-b);
 	return readjust_size(a); 
 }
 
-inline static std::vector<std::string> V_SHIFT_LEFT(std::vector<std::string> a, std::size_t b)
+static std::vector<std::string> V_SHIFT_LEFT(std::vector<std::string> a, std::size_t b)
 {
 	return V_SIGNED_SHIFT_LEFT(set_sign(a, false),b);  
 }
 
-inline static std::vector<std::string> V_SHIFT_RIGHT(std::vector<std::string> a, std::size_t b)
+static std::vector<std::string> V_SHIFT_RIGHT(std::vector<std::string> a, std::size_t b)
 {
 	return V_SIGNED_SHIFT_RIGHT(set_sign(a, false),b); 
 }
 
-inline static std::vector<std::string> V_LOGICAL_AND(std::vector<std::string> a,std::vector<std::string> b)
+static std::vector<std::string> V_LOGICAL_AND(std::vector<std::string> a,std::vector<std::string> b)
 {
 	return V_REDUCTION_AND(V_REDUCTION_OR(a),V_REDUCTION_OR(b));
 }
 
-inline static std::vector<std::string> V_LOGICAL_OR(std::vector<std::string> a,std::vector<std::string> b)
+static std::vector<std::string> V_LOGICAL_OR(std::vector<std::string> a,std::vector<std::string> b)
 {
 	return V_REDUCTION_OR(V_REDUCTION_OR(a),V_REDUCTION_OR(b));
 }
 
-inline static std::vector<std::string> V_LT(std::vector<std::string> a,std::vector<std::string> b)
+static std::vector<std::string> V_LT(std::vector<std::string> a,std::vector<std::string> b)
 {
 	return	return_internal_representation(false, 1, (internal_quick_eval(a,b) == -1) 	? "1":"0");
 }
 
-inline static std::vector<std::string> V_GT(std::vector<std::string> a,std::vector<std::string> b)
+static std::vector<std::string> V_GT(std::vector<std::string> a,std::vector<std::string> b)
 {
 	return	return_internal_representation(false, 1, (internal_quick_eval(a,b) == 1) 	? "1":"0");
 }
 
-inline static std::vector<std::string> V_LE(std::vector<std::string> a,std::vector<std::string> b)
+static std::vector<std::string> V_LE(std::vector<std::string> a,std::vector<std::string> b)
 {
 	return	return_internal_representation(false, 1, (internal_quick_eval(a,b) != 1) 	? "1":"0");
 }
 
-inline static std::vector<std::string> V_GE(std::vector<std::string> a,std::vector<std::string> b)
+static std::vector<std::string> V_GE(std::vector<std::string> a,std::vector<std::string> b)
 {
 	return	return_internal_representation(false, 1, (internal_quick_eval(a,b) != -1) 	? "1":"0");
 }
 
-inline static std::vector<std::string> V_EQUAL(std::vector<std::string> a,std::vector<std::string> b)
+static std::vector<std::string> V_EQUAL(std::vector<std::string> a,std::vector<std::string> b)
 {
 	return	return_internal_representation(false, 1, (internal_quick_eval(a,b) == 0) 	? "1":"0");
 }
 
-inline static std::vector<std::string> V_NOT_EQUAL(std::vector<std::string> a,std::vector<std::string> b)
+static std::vector<std::string> V_NOT_EQUAL(std::vector<std::string> a,std::vector<std::string> b)
 {
 	return	return_internal_representation(false, 1, (internal_quick_eval(a,b) != 0) 	? "1":"0");
 }
 
-inline static std::vector<std::string> V_ADD(std::vector<std::string> a,std::vector<std::string> b)
+static std::vector<std::string> V_ADD(std::vector<std::string> a,std::vector<std::string> b)
 {
 	char previous_carry = '0';
 	std::string result = "";
@@ -815,12 +798,12 @@ inline static std::vector<std::string> V_ADD(std::vector<std::string> a,std::vec
 	return	return_internal_representation(is_signed(a) && is_signed(b), std_length+1, result);
 }
 
-inline static std::vector<std::string> V_MINUS(std::vector<std::string> a,std::vector<std::string> b)
+static std::vector<std::string> V_MINUS(std::vector<std::string> a,std::vector<std::string> b)
 {
 	return V_ADD(a, V_MINUS(b));
 }
 
-inline static std::vector<std::string> V_MULTIPLY(std::vector<std::string> a,std::vector<std::string> b)
+static std::vector<std::string> V_MULTIPLY(std::vector<std::string> a,std::vector<std::string> b)
 {
 	std::vector<std::string> result = return_internal_representation(is_signed(a) && is_signed(b),0,"0");
 	a = readjust_size(a);
@@ -834,7 +817,7 @@ inline static std::vector<std::string> V_MULTIPLY(std::vector<std::string> a,std
 	return result;
 }
 
-inline static std::vector<std::string> V_POWER(std::vector<std::string> a,std::vector<std::string> b)
+static std::vector<std::string> V_POWER(std::vector<std::string> a,std::vector<std::string> b)
 {
 	std::vector<std::string> result = return_internal_representation(is_signed(a) && is_signed(b),0,"1");
 	while(internal_quick_eval(b,V_ZERO) > 0)
@@ -845,7 +828,7 @@ inline static std::vector<std::string> V_POWER(std::vector<std::string> a,std::v
 	// TODO negative power !!!( is it suported ?)
 	return result;
 }
-inline static std::vector<std::string> V_DIV(std::vector<std::string> a,std::vector<std::string> b)
+static std::vector<std::string> V_DIV(std::vector<std::string> a,std::vector<std::string> b)
 {
 	std::vector<std::string> result = return_internal_representation(is_signed(a) && is_signed(b),0,"0");
 	//TODO signed division!
@@ -864,7 +847,7 @@ inline static std::vector<std::string> V_DIV(std::vector<std::string> a,std::vec
 	return result;
 }
 
-inline static std::vector<std::string> V_MOD(std::vector<std::string> a,std::vector<std::string> b)
+static std::vector<std::string> V_MOD(std::vector<std::string> a,std::vector<std::string> b)
 {
 	//TODO signed division!
 	while(internal_quick_eval(b, a) < 0)
@@ -884,31 +867,26 @@ inline static std::vector<std::string> V_MOD(std::vector<std::string> a,std::vec
  *     |  |__  |__) |\ |  /\  |__) \ /    /  \ |__) |__  |__)  /\   |  | /  \ |\ | 
  *     |  |___ |  \ | \| /~~\ |  \  |     \__/ |    |___ |  \ /~~\  |  | \__/ | \| 
  *                                                                                 
-	The  evaluation  of  a  conditional  operator  shall  begin  with  a  logical  equality  comparison
-	of expression1 with zero, termed the condition. If the condition evaluates to false (0), then expression3 shall be
-	evaluated  and  used  as  the  result  of  the  conditional  expression.  If  the  condition  evaluates  to  true  (1),  then
-	expression2 is evaluated and used as the result. If the condition evaluates to an ambiguous value (x or z),
-	then  both  expression2  and  expression3  shall  be  evaluated;  and  their  results  shall  be  combined,  bit  by  bit,
-	using Table 5-21 to  calculate  the  final  result  unless  expression2  or  expression3  is  real,  in  which  case  the
-	result  shall  be  0.  If  the  lengths  of  expression2  and  expression3  are  different,  the  shorter  operand  shall  be
-	lengthened to match the longer and zero-filled from the left (the high-order end)
 */
 static std::vector<std::string> V_TERNARY(std::vector<std::string> a, std::vector<std::string> b, std::vector<std::string> c)
 {
 	/*	if a evaluates properly	*/
 	std::vector<std::string> eval = V_REDUCTION_OR(a);
-	if(internal_quick_eval(eval, V_ONE) == 0)		return b;
-	else if(internal_quick_eval(eval, V_ZERO) == 0)	return c; 
-
-	std::string result = "";
-	std::size_t std_len = size_max(get_len(b), get_len(c));
-	b = resize(b,std_len);
-	c = resize(c,std_len);
-
-	for(std::size_t i=std_len-1; i>=MSB; i--)
-		PUSH_MSB(result,v_ternary(get_bit(b, i), get_bit(c, i)));
-
-	return return_internal_representation(false,std_len,result);
+	if(internal_quick_eval(eval, V_ONE) == 0)	
+	{	
+		std::cout << get_bitstring(eval) << " evaluates to true\n";
+		return b;
+	}
+	else if(internal_quick_eval(eval, V_ZERO) == 0)	
+	{
+		std::cout << get_bitstring(eval) << " evaluates to false\n";
+		return c; 
+	}
+	else		
+	{				
+		std::cout << get_bitstring(eval) << " evaluates to unknown\n";					
+		return V_REDUX(b,c,l_ternary);
+	}
 }
 
 
@@ -1032,24 +1010,6 @@ std::string arithmetic(std::string a_in, std::string op1 ,std::string b_in, std:
 	
 	 /* return Process Operator via ternary */
 	return	v_bin_string(	(op1 != "?")	?	bad_ops(op1):
-							(op2 == ":")	?	bad_ops(op2):
+							(op2 != ":")	?	bad_ops(op2):
 												V_TERNARY(a,b,c));
-}
-
-int main()
-{
-	//read input file space separated operation 1 / line
-	while(1)
-	{
-		char numb[3][512];
-		scanf("%s %s %s", numb[0], numb[1], numb[2]);
-		std::cout << arithmetic(numb[0],numb[1],numb[2]);
-	}
-
-	if(is_string_of_radix(std::string("0"),10) == false)
-		std::cout << "BROKEN";
-	else	
-		std::cout << "WORKING";
-
-	return 0;
 }
