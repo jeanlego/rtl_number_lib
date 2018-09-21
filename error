@@ -1,0 +1,72 @@
+rtl_int.cpp:96:42: warning: zero as null pointer constant [-Wzero-as-null-pointer-constant]
+        return std::strtol(orig_number.c_str(), NULL, radix);
+                                                ^~~~
+                                                nullptr
+/usr/lib/clang/6.0.1/include/stddef.h:100:18: note: expanded from macro 'NULL'
+#    define NULL __null
+                 ^
+rtl_int.cpp:101:29: warning: implicit conversion changes signedness: 'long' to 'std::size_t' (aka 'unsigned long') [-Wsign-conversion]
+        std::size_t defined_size = v_strtol(internal_bit_struct[1],10);
+                    ~~~~~~~~~~~~   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+rtl_int.cpp:75:29: note: expanded from macro 'v_strtol'
+#define v_strtol(num,radix) _v_strtol(num,radix,__FILE__, __LINE__)
+                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+rtl_int.cpp:124:85: warning: implicit conversion turns string literal into bool: 'const char [2]' to 'bool' [-Wstring-conversion]
+        return return_internal_representation(((new_sign && is_signed(internal_binaries))? "1": "0"), v_strtol(internal_binaries[1],10), internal_binaries[2]);
+               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~                                              ^~~
+rtl_int.cpp:124:90: warning: implicit conversion turns string literal into bool: 'const char [2]' to 'bool' [-Wstring-conversion]
+        return return_internal_representation(((new_sign && is_signed(internal_binaries))? "1": "0"), v_strtol(internal_binaries[1],10), internal_binaries[2]);
+               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~                                                   ^~~
+rtl_int.cpp:130:22: warning: implicit conversion changes signedness: 'unsigned long' to 'long' [-Wsign-conversion]
+        long size_dif = len - get_len(internal_bit_struct);
+             ~~~~~~~~   ~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+rtl_int.cpp:130:18: warning: implicit conversion changes signedness: 'long' to 'unsigned long' [-Wsign-conversion]
+        long size_dif = len - get_len(internal_bit_struct);
+                        ^~~ ~
+rtl_int.cpp:147:37: warning: implicit conversion changes signedness: 'std::size_t' (aka 'unsigned long') to 'long' [-Wsign-conversion]
+        return resize(internal_bit_struct, get_len(internal_bit_struct));
+               ~~~~~~                      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+rtl_int.cpp:525:20: warning: implicit conversion changes signedness: 'const unsigned long' to 'long' [-Wsign-conversion]
+        long std_length = std::max(get_len(a), get_len(b));
+             ~~~~~~~~~~   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+rtl_int.cpp:529:22: warning: implicit conversion loses integer precision: 'long' to 'int' [-Wshorten-64-to-32]
+        for(int i=std_length-1; i>=MSB && condition_code == 0; i--)
+                ~ ~~~~~~~~~~^~
+rtl_int.cpp:540:22: warning: implicit conversion loses integer precision: 'unsigned long' to 'int' [-Wshorten-64-to-32]
+        int end = get_len(a)-1;
+            ~~~   ~~~~~~~~~~^~
+rtl_int.cpp:551:20: warning: implicit conversion changes signedness: 'const unsigned long' to 'long' [-Wsign-conversion]
+        long std_length = std::max(get_len(a), get_len(b));
+             ~~~~~~~~~~   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+rtl_int.cpp:555:22: warning: implicit conversion loses integer precision: 'long' to 'int' [-Wshorten-64-to-32]
+        for(int i=std_length-1; i>=MSB; i--)
+                ~ ~~~~~~~~~~^~
+rtl_int.cpp:570:54: warning: implicit conversion changes signedness: 'std::size_t' (aka 'unsigned long') to 'long' [-Wsign-conversion]
+        return return_internal_representation(is_signed(a), get_len(a), result);
+               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~               ^~~~~~~~~~
+rtl_int.cpp:565:22: warning: implicit conversion loses integer precision: 'unsigned long' to 'int' [-Wshorten-64-to-32]
+        for(int i=get_len(a)-1; i >= 0; i--)
+                ~ ~~~~~~~~~~^~
+rtl_int.cpp:583:22: warning: implicit conversion loses integer precision: 'unsigned long' to 'int' [-Wshorten-64-to-32]
+        for(int i=get_len(a)-1; i >= MSB; i--)
+                ~ ~~~~~~~~~~^~
+rtl_int.cpp:692:38: warning: implicit conversion changes signedness: 'long' to 'std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::size_type' (aka 'unsigned long') [-Wsign-conversion]
+        get_bitstring(a).append(std::string(b,'0'));
+                                ~~~         ^
+rtl_int.cpp:698:58: warning: implicit conversion changes signedness: 'long' to 'unsigned long' [-Wsign-conversion]
+        get_bitstring(a) = get_bitstring(a).substr(0,get_len(a)-b);
+                                                               ~^
+rtl_int.cpp:756:20: warning: implicit conversion changes signedness: 'const unsigned long' to 'long' [-Wsign-conversion]
+        long std_length = std::max(get_len(a), get_len(b));
+             ~~~~~~~~~~   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+rtl_int.cpp:760:22: warning: implicit conversion loses integer precision: 'long' to 'int' [-Wshorten-64-to-32]
+        for(int i=std_length-1; i>=MSB; i--)
+                ~ ~~~~~~~~~~^~
+rtl_int.cpp:780:12: warning: implicit conversion loses integer precision: 'std::size_t' (aka 'unsigned long') to 'int' [-Wshorten-64-to-32]
+        int len = get_len(a);
+            ~~~   ^~~~~~~~~~
+rtl_int.cpp:856:17: warning: implicit conversion changes signedness: 'const unsigned long' to 'long' [-Wsign-conversion]
+        long std_len = std::max(get_len(b), get_len(c));
+             ~~~~~~~   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+rtl_int.cpp:860:19: warning: implicit conversion loses integer precision: 'long' to 'int' [-Wshorten-64-to-32]
+        for(int i=std_len-1; i>=MSB; i--)
