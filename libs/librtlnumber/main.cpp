@@ -10,7 +10,7 @@ int main()
 	for(std::size_t i = 0; i<UPPER_LIMIT; i++)
 	{
 		char typ[512];
-		std::cout << "\ninsert operation number of operand [1,2,3]: ";
+		std::cout << "\ninsert operation number of operand [1,2,3] (Q/q to quit): ";
 		scanf("%s", typ);
 		std::string comp = typ; 
 
@@ -26,6 +26,9 @@ int main()
 			char numb[5][512];
 			scanf("%s %s %s %s %s", numb[0], numb[1], numb[2], numb[3], numb[4]);
 			std::cout << "Result is: " << arithmetic(numb[0],numb[1],numb[2], numb[3], numb[4]);
+		}else if (comp == "Q" || comp == "q"){
+			i = (UPPER_LIMIT + 1);
+			std::cout << "\nExiting...\n";
 		}else{
 			std::cout << "ERROR wrong type";
 		}
