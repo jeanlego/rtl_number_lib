@@ -1,6 +1,7 @@
-#include "stdio.h"
+#include <stdio.h>
 #include <iostream>
 #include <string>
+#include <cstring>
 #include "rtl_int.h"
 #define UPPER_LIMIT 20
 
@@ -13,28 +14,28 @@ int main(int argc, char** argv)
 		std::cout << "You have entered " << argc << " arguments:" << "\n";
 		for (int i = 0; i < argc; ++i)
 		{
-			std::cout << argv[i] << "\n";
+			std::cout << "argv[" << i << "]: " << argv[i] << "\n";
 		}
 
-		if((4 == argc) && ("2" == argv[1]))
+		if((4 == argc) && (0 == strcmp("1", argv[1])))
 		{
-			std::cout << "arithmetic(" << argv[2] << ", " << argv[3] << ")" << std::endl;
+			std::cout << "arithmetic(\"" << argv[2] << "\", \"" << argv[3] << "\")" << std::endl;
 
 			std::string result = arithmetic(argv[2], argv[3]);
 
 			std::cout << result << std::endl;
 		}
-		else if (5 == argc)
+		else if ((5 == argc) && (0 == strcmp("2", argv[1])))
 		{
-			std::cout << "arithmetic(" << argv[2] << ", " << argv[3]<< ", " << argv[4] << ")" << std::endl;
+			std::cout << "arithmetic(\"" << argv[2] << "\", \"" << argv[3]<< "\", \"" << argv[4] << "\")" << std::endl;
 
 			std::string result = arithmetic(argv[2], argv[3], argv[4]);
 
 			std::cout << result << std::endl;
 		}
-		else if (6 == argc)
+		else if ((6 == argc) && (0 == strcmp("3", argv[1])))
 		{
-			std::cout << "arithmetic(" << argv[2] << ", " << argv[3]<< ", " << argv[4]<< ", " << argv[5]<< ", " << argv[6] << ")" << std::endl;
+			std::cout << "arithmetic(\"" << argv[2] << "\", \"" << argv[3]<< "\", \"" << argv[4]<< "\", \"" << argv[5]<< "\", \"" << argv[6] << "\")" << std::endl;
 
 			std::string result = arithmetic(argv[2], argv[3], argv[4], argv[5], argv[6]);
 
@@ -42,7 +43,7 @@ int main(int argc, char** argv)
 		}
 		else
 		{
-			std::cout << "Too Many Arguments:" << argc << " !" << std::endl;
+			std::cout << "ERROR: Too Many Arguments:" << argc << " !" << std::endl;
 		}
 
 		std::cout << "Exiting..." << std::endl;
