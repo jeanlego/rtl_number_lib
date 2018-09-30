@@ -2,7 +2,9 @@
 #include <iostream>
 #include <string>
 #include <cstring>
+
 #include "rtl_int.h"
+
 #define UPPER_LIMIT 20
 
 int main(int argc, char** argv) 
@@ -52,7 +54,7 @@ int main(int argc, char** argv)
 	{
 		std::cout << "\nInteractive Mode:" << std::endl;
 		//read input file space separated operation 1 / line
-		for(std::size_t i = 0; i<UPPER_LIMIT; i++)
+		for(std::size_t i = 0; i < UPPER_LIMIT; i++)
 		{
 			char typ[512];
 			std::cout << "insert operation number of operand [1,2,3] (Q/q to quit): ";
@@ -63,19 +65,22 @@ int main(int argc, char** argv)
 			{
 				char numb[2][512];
 				scanf("%s %s", numb[0], numb[1]);
-				std::cout << "Result is: " << arithmetic(numb[0],numb[1]) << std::endl;
+				std::string result = arithmetic(numb[0], numb[1]);
+				std::cout << "Result is: " << result << std::endl;
 			}
 			else if (comp == "2")
 			{
 				char numb[3][512];
 				scanf("%s %s %s", numb[0], numb[1], numb[2]);
-				std::cout << "Result is: " << arithmetic(numb[0],numb[1],numb[2]) << std::endl;
+				std::string result = arithmetic(numb[0], numb[1], numb[2]);
+				std::cout << "Result is: " << result << std::endl;
 			}
 			else if (comp == "3")
 			{
 				char numb[5][512];
 				scanf("%s %s %s %s %s", numb[0], numb[1], numb[2], numb[3], numb[4]);
-				std::cout << "Result is: " << arithmetic(numb[0],numb[1],numb[2], numb[3], numb[4]) << std::endl;
+				std::string result = arithmetic(numb[0], numb[1], numb[2], numb[3], numb[4]);
+				std::cout << "Result is: " << result << std::endl;
 			}
 			else if (comp == "Q" || comp == "q")
 			{

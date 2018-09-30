@@ -13,16 +13,12 @@ ANY_FAILURES="false"
 FAILURE_COUNT=0
 
 function ctrl_c() {
-	echo -e "\n\n** EXITED FORCEFULLY **\n\n"
+    echo -e "\n\n** EXITED FORCEFULLY **\n\n"
     echo -e "${0##*/}: $TOTAL_TEST_RAN Tests Ran; $FAILURE_COUNT Test Failures.\n"
-	exit $((0-FAILURE_COUNT))
+    exit $((0-FAILURE_COUNT))
 }
 
 echo -e "\n${0##*/}: Init:"
-
-# TESTS=`cat ${0%/*}/regression_tests/*.test.csv`
-
-# echo -e "${0##*/}: TESTS: \n\"\n$TESTS\n\""
 
 # Dynamically load in inputs and results from
 #  file(s) on disk.
@@ -44,9 +40,6 @@ for INPUT in ${0%/*}/regression_tests/*.test.csv; do
         # echo -e "${0##*/}: TEST_LABEL: \n\"\n$TEST_LABEL\n\""
         # EXPECTED_RESULT=${arr[-1]}
         # echo -e "${0##*/}: EXPECTED_RESULT: \n\"\n$EXPECTED_RESULT\n\""
-
-        # TODO: Remove: tmp=`echo $arr | sed -e "s/ /\\\ /g"`
-        # TODO: Remove: echo -e "tmp: \"$tmp\""
 
         ARR_LENGTH=${#arr[@]}
 
@@ -114,7 +107,7 @@ for INPUT in ${0%/*}/regression_tests/*.test.csv; do
 
         # Parse out result from OUTPUT_AND_RESULT
         #  and compare to expected reults from file
-        RESULT=`echo "$OUTPUT_AND_RESULT" | grep $EXPECTED_RESULT`
+        RESULT=`echo "$OUTPUT_AND_RESULT" | grep -i $EXPECTED_RESULT`
 
         # echo -e "${0##*/}: RESULT: \n\"\n$RESULT\n\""
 
@@ -130,6 +123,7 @@ for INPUT in ${0%/*}/regression_tests/*.test.csv; do
         # Check that Expected Result isn't empty
         elif [ -z "$EXPECTED_RESULT" ]
         then
+            echo -e "${0##*/}: ERROR: Expected Result Empty!"
             SUCCESS="false"
         elif [ "$EXPECTED_RESULT" == "$RESULT" ]
         then
@@ -143,29 +137,31 @@ for INPUT in ${0%/*}/regression_tests/*.test.csv; do
 
         if [ "$SUCCESS" == "true" ]
         then
-            # echo -e "${0##*/}: $TEST_LABEL: Success!"
-            # echo -e " --- PASSED == $TEST_LABEL (Expected: $EXPECTED_RESULT, Got: $RESULT)"
             echo -e " --- PASSED == $TEST_LABEL"
         else
             ANY_FAILURES="true"
             FAILURE_COUNT=$((FAILURE_COUNT+1))
-            # echo -e "${0##*/}: $TEST_LABEL: ERROR: Incorrect Result Detected!"
             echo -e " -X- FAILED == $TEST_LABEL"
             echo -e "$TEST_LABEL: Called: ${0%/*}/rtl_number$RTL_NUMBER_ARGUMENTS:"
             echo -e "$TEST_LABEL: Expected: \"$EXPECTED_RESULT\""
             echo -e "$TEST_LABEL: Got: \"$OUTPUT_AND_RESULT\""
         fi
     done < "$INPUT"
-    #  Re-Enable Wildcard Expanstion '*' 
+    #  Re-Enable Bash Wildcard Expanstion '*' 
     set +f
 done
 
 echo -e "${0##*/}: $TOTAL_TEST_RAN Tests Ran; $FAILURE_COUNT Test Failures."
-echo -e "${0##*/}: End.\n"
 
 if [ "$ANY_FAILURES" == "false" ]
 then
+    echo -e "${0##*/}: End.\n"
     exit 0
 else
-    exit -1
+    if [ "$FAILURE_COUNT" -gt "127" ]
+    then
+        echo -e"\n${0##*/}: WARNING: Return Code may be unreliable: More than 127 Failures!\n"
+    fi
+    echo -e "${0##*/}: End.\n"
+    exit $((0-FAILURE_COUNT))
 fi
