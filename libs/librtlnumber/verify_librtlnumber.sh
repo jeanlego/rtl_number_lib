@@ -8,15 +8,17 @@
 # trap ctrl-c and call ctrl_c()
 trap ctrl_c INT
 
+TOTAL_TEST_RAN=0
+ANY_FAILURES="false"
+FAILURE_COUNT=0
+
 function ctrl_c() {
 	echo -e "\n\n** EXITED FORCEFULLY **\n\n"
-	exit -2
+    echo -e "${0##*/}: $TOTAL_TEST_RAN Tests Ran; $FAILURE_COUNT Test Failures.\n"
+	exit $((0-FAILURE_COUNT))
 }
 
 echo -e "\n${0##*/}: Init:"
-
-ANY_FAILURES="false"
-FAILURE_COUNT=0
 
 # TESTS=`cat ${0%/*}/regression_tests/*.test.csv`
 
@@ -43,8 +45,8 @@ for INPUT in ${0%/*}/regression_tests/*.test.csv; do
         # EXPECTED_RESULT=${arr[-1]}
         # echo -e "${0##*/}: EXPECTED_RESULT: \n\"\n$EXPECTED_RESULT\n\""
 
-        tmp=`echo $arr | sed -e "s/ /\\\ /g"`
-        echo -e "tmp: \"$tmp\""
+        # TODO: Remove: tmp=`echo $arr | sed -e "s/ /\\\ /g"`
+        # TODO: Remove: echo -e "tmp: \"$tmp\""
 
         ARR_LENGTH=${#arr[@]}
 
@@ -95,6 +97,8 @@ for INPUT in ${0%/*}/regression_tests/*.test.csv; do
         fi
 
         # echo -e "${0##*/}: RTL_NUMBER_ARGUMENTS: \n\"\n$RTL_NUMBER_ARGUMENTS\n\""
+
+        TOTAL_TEST_RAN=$((TOTAL_TEST_RAN+1))
 
         # echo -e "${0##*/}: ${0%/*}/rtl_number$RTL_NUMBER_ARGUMENTS:"
 
@@ -156,7 +160,7 @@ for INPUT in ${0%/*}/regression_tests/*.test.csv; do
     set +f
 done
 
-echo -e "${0##*/}: $FAILURE_COUNT Test Failures."
+echo -e "${0##*/}: $TOTAL_TEST_RAN Tests Ran; $FAILURE_COUNT Test Failures."
 echo -e "${0##*/}: End.\n"
 
 if [ "$ANY_FAILURES" == "false" ]
