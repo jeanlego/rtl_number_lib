@@ -5,52 +5,163 @@
 #          for the Reconfigurable Computing Research Lab at the
 #           Univerity of New Brunswick in Fredericton, New Brunswick, Canada
 
+# trap ctrl-c and call ctrl_c()
+trap ctrl_c INT
+
+function ctrl_c() {
+	echo -e "\n\n** EXITED FORCEFULLY **\n\n"
+	exit -2
+}
+
 echo -e "\n${0##*/}: Init:"
 
-# echo "${0##*/}: # arguments called with ---->  ${@}     "
-# echo "${0##*/}: # \$1 ---------------------->  $1       "
-# echo "${0##*/}: # \$2 ---------------------->  $2       "
-# echo "${0##*/}: # path to me --------------->  ${0}     "
-# echo "${0##*/}: # parent path -------------->  ${0%/*}  "
-# echo "${0##*/}: # my name ------------------>  ${0##*/} "
+ANY_FAILURES="false"
+FAILURE_COUNT=0
 
+# TESTS=`cat ${0%/*}/regression_tests/*.test.csv`
 
+# echo -e "${0##*/}: TESTS: \n\"\n$TESTS\n\""
 
-# TODO: Dynamically load in inputs and results from
-#        file(s) on disk.
+# Dynamically load in inputs and results from
+#  file(s) on disk.
+for INPUT in ${0%/*}/regression_tests/*.test.csv; do
+    [ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }
 
-# TODO: Loop and call-out to rtl_number in non-interactive
-#        mode for each input/result record in file.
+    echo -e "${0##*/}: Running Test File: $INPUT:"
 
-echo -e "\n${0##*/}: ${0%/*}/rtl_number 2 1 + 1:"
+    # Need to escape any special characters in RTL_NUMBER_ARGUMENTS
+    #        (e.g. * (multiplication), etc.)
+    set -f
 
-OUTPUT_AND_RESULT=`${0%/*}/rtl_number 2 1 + 1`
+    # Set "," as the field separator using $IFS 
+    # and read line by line using while read combo 
+    while IFS=',' read -a arr
+    do
+        # for i in ${arr[@]}; do echo $i; done
+        # TEST_LABEL=${arr[0]}
+        # echo -e "${0##*/}: TEST_LABEL: \n\"\n$TEST_LABEL\n\""
+        # EXPECTED_RESULT=${arr[-1]}
+        # echo -e "${0##*/}: EXPECTED_RESULT: \n\"\n$EXPECTED_RESULT\n\""
 
-echo -e "${0##*/}: OUTPUT_AND_RESULT: \n\"\n$OUTPUT_AND_RESULT\n\""
+        tmp=`echo $arr | sed -e "s/ /\\\ /g"`
+        echo -e "tmp: \"$tmp\""
 
-# TODO: Parse out any ERRORS from OUTPUT_AND_RESULT
-#        and hand accordingly
+        ARR_LENGTH=${#arr[@]}
 
-# TODO: Parse out result from OUTPUT_AND_RESULT
-#        and compare to expected reults from file
+        # echo -e "${0##*/}: ARR_LENGTH: $ARR_LENGTH"
 
+        ARR_END_INDEX=$((ARR_LENGTH-1))
 
+        # echo -e "${0##*/}: ARR_END_INDEX: $ARR_END_INDEX"
 
+        TEST_LABEL="" # TODO: Handle Labels with spaces
+        EXPECTED_RESULT=""
+        RTL_NUMBER_ARGUMENTS=""
 
+        EXECUTE_CONTINUE="false"
 
+        INDEX=0
+        for i in ${arr[@]}; do
+            # echo ${INDEX}_$i
 
+            # Skip Comments
+            if [[ "$i" =~ ^#.*$ ]]
+            then
+                # echo -e "${0##*/}: Ignoring Comment Line. Continuing..."
+                EXECUTE_CONTINUE="true"
+                break # continue to next outer loop iteration
+            elif [ "$INDEX" -eq "0" ]
+            then
+                TEST_LABEL=$i
 
+                # echo -e "${0##*/}: TEST_LABEL: \n\"\n$TEST_LABEL\n\""
+            elif [ "$INDEX" -eq "$ARR_END_INDEX" ]
+            then
+                EXPECTED_RESULT=${arr[-1]}
 
-# # trap ctrl-c and call ctrl_c()
-# trap ctrl_c INT
+                # echo -e "${0##*/}: EXPECTED_RESULT: \n\"\n$EXPECTED_RESULT\n\""
+            else
+                RTL_NUMBER_ARGUMENTS+=" "
+                RTL_NUMBER_ARGUMENTS+=$i
+            fi
+            let INDEX=${INDEX}+1
+        done
 
-# function ctrl_c() {
-# #	echo "** Trapped CTRL-C"
-# 	exit 0
-# }
+        # continue to next loop iteration
+        if [ "$EXECUTE_CONTINUE" == "true" ]
+        then
+            # echo -e "${0##*/}: Ignoring Comment Line. Continuing..."
+            continue
+        fi
 
+        # echo -e "${0##*/}: RTL_NUMBER_ARGUMENTS: \n\"\n$RTL_NUMBER_ARGUMENTS\n\""
+
+        # echo -e "${0##*/}: ${0%/*}/rtl_number$RTL_NUMBER_ARGUMENTS:"
+
+        OUTPUT_AND_RESULT=`${0%/*}/rtl_number$RTL_NUMBER_ARGUMENTS`
+
+        # echo -e "${0##*/}: OUTPUT_AND_RESULT: \n\"\n$OUTPUT_AND_RESULT\n\""
+
+        # Parse out any ERRORS from OUTPUT_AND_RESULT
+        #  and handle accordingly
+        ERRORS=`echo "$OUTPUT_AND_RESULT" | grep -i error`
+
+        # echo -e "${0##*/}: ERRORS: \n\"\n$ERRORS\n\""
+
+        # Parse out result from OUTPUT_AND_RESULT
+        #  and compare to expected reults from file
+        RESULT=`echo "$OUTPUT_AND_RESULT" | grep $EXPECTED_RESULT`
+
+        # echo -e "${0##*/}: RESULT: \n\"\n$RESULT\n\""
+
+        SUCCESS="false"
+
+        if [ ! -z "$ERRORS" ]
+        then
+            # echo -e "${0##*/}: Errors detected!"
+            SUCCESS="false"
+        elif [ -z "$RESULT" ]
+        then
+            SUCCESS="false"
+        # Check that Expected Result isn't empty
+        elif [ -z "$EXPECTED_RESULT" ]
+        then
+            SUCCESS="false"
+        elif [ "$EXPECTED_RESULT" == "$RESULT" ]
+        then
+            SUCCESS="true"
+        # This last case shouldn't happen
+        else
+            SUCCESS="false"
+        fi
+
+        # echo -e "${0##*/}: SUCCESS?: $SUCCESS"
+
+        if [ "$SUCCESS" == "true" ]
+        then
+            # echo -e "${0##*/}: $TEST_LABEL: Success!"
+            # echo -e " --- PASSED == $TEST_LABEL (Expected: $EXPECTED_RESULT, Got: $RESULT)"
+            echo -e " --- PASSED == $TEST_LABEL"
+        else
+            ANY_FAILURES="true"
+            FAILURE_COUNT=$((FAILURE_COUNT+1))
+            # echo -e "${0##*/}: $TEST_LABEL: ERROR: Incorrect Result Detected!"
+            echo -e " -X- FAILED == $TEST_LABEL"
+            echo -e "$TEST_LABEL: Called: ${0%/*}/rtl_number$RTL_NUMBER_ARGUMENTS:"
+            echo -e "$TEST_LABEL: Expected: \"$EXPECTED_RESULT\""
+            echo -e "$TEST_LABEL: Got: \"$OUTPUT_AND_RESULT\""
+        fi
+    done < "$INPUT"
+    #  Re-Enable Wildcard Expanstion '*' 
+    set +f
+done
+
+echo -e "${0##*/}: $FAILURE_COUNT Test Failures."
 echo -e "${0##*/}: End.\n"
 
-exit 0
-
-
+if [ "$ANY_FAILURES" == "false" ]
+then
+    exit 0
+else
+    exit -1
+fi

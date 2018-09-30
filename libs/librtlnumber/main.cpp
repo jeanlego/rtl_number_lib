@@ -9,13 +9,13 @@ int main(int argc, char** argv)
 { 
 	if(1 < argc)
 	{
-		std::cout << "Non-Interactive Mode:" << std::endl;
+		// std::cout << "Non-Interactive Mode:" << std::endl;
 
-		std::cout << "You have entered " << argc << " arguments:" << "\n";
-		for (int i = 0; i < argc; ++i)
-		{
-			std::cout << "argv[" << i << "]: " << argv[i] << "\n";
-		}
+		// std::cout << "You have entered " << argc << " arguments:" << "\n";
+		// for (int i = 0; i < argc; ++i)
+		// {
+		// 	std::cout << "argv[" << i << "]: " << argv[i] << "\n";
+		// }
 
 		if((4 == argc) && (0 == strcmp("1", argv[1])))
 		{
@@ -43,10 +43,10 @@ int main(int argc, char** argv)
 		}
 		else
 		{
-			std::cout << "ERROR: Too Many Arguments:" << argc << " !" << std::endl;
+			std::cout << "ERROR: Too Many Arguments: " << (argc - 1) << "!" << std::endl;
 		}
 
-		std::cout << "Exiting..." << std::endl;
+		// std::cout << "Exiting..." << std::endl;
 	}
 	else
 	{
