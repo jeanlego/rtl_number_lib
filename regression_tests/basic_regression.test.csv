@@ -1,0 +1,32 @@
+#####################
+# Unary operations
+
+# bitwise 
+Bitwise-Not,    ~,  4'b1010,    4'b0101
+
+#####################
+# Binary operations
+
+# bitwise
+Bitwise-And,    4'b1010,    &,  4'b1000,    4'b1000
+Bitwise-Or,     4'b1010,    |,  4'b1000,    4'b1000
+Bitwise-Nor,    4'b1010,    ~|, 4'b1000,    4'b1000
+Bitwise-Nand,   4'b1010,    ~&, 4'b1000,    4'b1000
+Bitwise-Xnor,   4'b1010,    ~^, 4'b1000,    4'b1000
+Bitwise-Xor,    4'b1010,    ^,  4'b1000,    4'b1000
+
+# logical operation
+Logical-And,    4'b1010,    &&, 4'b1000,    1'b1
+Logical-Or,     4'b1010,    ||, 4'b1000,    1'b1
+Logical-Or,     4'b0000,    ||, 4'b1000,    1'b1
+Logical-Or,     4'b0000,    ||, 4'b0000,    1'b0
+
+# arithmetic
+Basic-Addition,         1,  +,  1,  2'sb10
+Basic-Subtraction,      4,  -,  2,  2'sb10
+
+#this is not supported since -2 is the equivalent 4 + (- 2)
+#Basic-Subtraction-2,    4,  +,  -2, 2'sb10
+
+Basic-Division,         10, /,  2,  3'sb0101
+Basic-Multiplication,   2,  *,  2,  3'sb0100

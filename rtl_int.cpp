@@ -293,7 +293,6 @@ static std::vector<std::string> standardize_input(std::string input_number)
 {	
 	BRK
 	//remove underscores
-	std::cout << "pre-processing input: " << input_number << std::endl;
 	input_number.erase(std::remove(input_number.begin(), input_number.end(), '_'), input_number.end());
 	std::vector<std::string> to_return = V_BAD;
 
@@ -1012,4 +1011,15 @@ std::string arithmetic(std::string a_in, std::string op1 ,std::string b_in, std:
 	return	v_bin_string(	(op1 != "?")	?	bad_ops(op1):
 							(op2 != ":")	?	bad_ops(op2):
 												V_TERNARY(a,b,c));
+}
+
+int main(int argc, char** argv) 
+{ 
+
+	if		(argc == 3)	std::cout << arithmetic(argv[1], argv[2]) << std::endl;
+	else if	(argc == 4)	std::cout << arithmetic(argv[1], argv[2], argv[3]) << std::endl;
+	else if (argc == 5)	std::cout << arithmetic(argv[1], argv[2], argv[3], argv[4], argv[5]) << std::endl;
+	else				std::cout << "ERROR: Too Many Arguments: " << std::to_string(argc - 1) << "!" << std::endl;
+
+	return 0;
 }

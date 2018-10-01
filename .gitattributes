@@ -16,7 +16,3 @@
 *.md        text
 *.rst       text
 
-#Don't convert line endings for code from external subtrees
-abc/**                  -text
-abc_with_bb_support/**  -text
-libs/EXTERNAL/**        -text
