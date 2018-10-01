@@ -159,26 +159,6 @@ static std::vector<std::string> readjust_size(std::vector<std::string> internal_
 	return resize(internal_bit_struct, get_len(internal_bit_struct));
 }
 
-// convert internal format to verilog
-static std::string v_bin_string(std::vector<std::string> internal_binary_number)
-{
-	BRK
-	//final resize
-	readjust_size(internal_binary_number);
-
-	std::string output = "";
-
-	if(internal_binary_number[1] != "0")
-		output += internal_binary_number[1];
-
-	output += "\'";
-
-	if(is_signed(internal_binary_number)) 
-		output += "s";
-
-	return output + "b" + internal_binary_number[2];
-}
-
 /***
  *     __   __            ___         ___     __   __   ___  __       ___    __       
  *    |__) |__) |  |\/| |  |  | \  / |__     /  \ |__) |__  |__)  /\   |  | /  \ |\ | 
@@ -810,6 +790,26 @@ static std::vector<std::string> V_TERNARY(std::vector<std::string> a, std::vecto
  *                                                             
  * 	This is used for testing purposes only, unused in ODIN as the input is already preprocessed
  */
+
+// convert internal format to verilog
+static std::string v_bin_string(std::vector<std::string> internal_binary_number)
+{
+	BRK
+	//final resize
+	readjust_size(internal_binary_number);
+
+	std::string output = "";
+
+	if(internal_binary_number[1] != "0")
+		output += internal_binary_number[1];
+
+	output += "\'";
+
+	if(is_signed(internal_binary_number)) 
+		output += "s";
+
+	return output + "b" + internal_binary_number[2];
+}
 
 inline static std::string to_bitstring(std::string orig_string, std::size_t radix)
 {
