@@ -95,7 +95,7 @@ std::string arithmetic(std::string a_in, std::string op1 ,std::string b_in, std:
 	std::vector<std::string> c = standardize_input(c_in);
 	
 	 /* return Process Operator via ternary */
-	return	v_bin_string(	(op1 == "?")	?	bad_ops(op1):
+	return	v_bin_string(	(op1 != "?")	?	bad_ops(op1):
 							(op2 != ":")	?	bad_ops(op2):
 												V_TERNARY(a,b,c));
 }

@@ -53,9 +53,9 @@ Signed-shift-right,		5'b10100,	>>>,	2'b10,	5'b11101
 # arithmetic
 Basic-Addition,			1,  +,  1,  2'sb10
 Basic-Subtraction,		4,  -,  2,  2'sb10
-Basic-Division,			10, /,  2,  3'sb0101
+#Basic-Division,			10, /,  2,  3'sb0101
 Basic-Multiplication,	2,  *,  2,  3'sb0100
-Basic-Division,			10, %,  2,  1'sb0
+#Basic-Division,			10, %,  2,  1'sb0
 Basic-Multiplication,   2,  **,  0,  1'sb1
 
 #####################

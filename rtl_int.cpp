@@ -528,48 +528,42 @@ static const char l_ternary[4][4] = {
 #define carry_func(a, b, carry)	v_or(v_and(a,b),v_and(v_xor(a,b),carry))
 
 
-//rtl_int.h #define return_int_eval(a,b) _return_int_eval(a, b, __func__, __LINE__)
-EVAL_RESULT _return_int_eval(RTL_INT a,RTL_INT b, const char *FUNCT, int LINE)
+//TODO: signed numbers!
+
+EVAL_RESULT return_int_eval(RTL_INT a,RTL_INT b)
 {
-	/*	find if they are equal	*/
-	RTL_INT xored = V_REDUCTION_XOR(a,b);
-	RTL_INT is_equal = V_LOGICAL_NOT(xored);
-	if(get_bit(is_equal,0) == '1')
-		return EQUAL;
-	
-	std::size_t std_length = get_len(xored);
+	std::size_t std_length = std::max(get_len(a),get_len(b));
 	a = resize(a, std_length);
+	b = resize(b, std_length);
 
-
-	for(std::size_t i=MSB;  i < std_length; i--)
+	auto bit_a = get_bitstring(a).begin();
+	auto bit_b = get_bitstring(b).begin();
+	for (; bit_a != get_bitstring(a).end() && bit_b != get_bitstring(b).end(); ++bit_a, ++bit_b)
 	{
-		signed char result = v_binary_op(get_bit(a, i), get_bit(xored, i),l_xor);
-		if		(result == 'x')							return UNKNOWN;
-		else if	(result == '1' && get_bit(a, i) == '1')	return GREATHER_THAN;
-		else if	(result == '1' && get_bit(a, i) == '0')	return LESS_THAN;
+		if		(*bit_a == '1' && *bit_b == '0')	return GREATHER_THAN;
+		else if	(*bit_a == '0' && *bit_b == '1')	return LESS_THAN;
+		else if	(*bit_a == 'x' || *bit_b == 'x')	return UNKNOWN;
 	}
-
-	//should not get here
-	std::cout << "UNABLE TO EVALUATE: <" << v_bin_string(a) << "> against <" << v_bin_string(b) << ">@" << FUNCT << "::" << std::to_string(LINE) << std::endl;	
-	std::abort();
+	return EQUAL;
 }
-EVAL_RESULT _return_int_eval(long a,RTL_INT b, const char *FUNCT, int LINE)
+EVAL_RESULT return_int_eval(long a,RTL_INT b)
 {
-	return _return_int_eval(standardize_input(std::to_string(a)),b,FUNCT,LINE);
+	return return_int_eval(standardize_input(std::to_string(a)),b);
 }
-EVAL_RESULT _return_int_eval(RTL_INT a,long b, const char *FUNCT, int LINE)
+EVAL_RESULT return_int_eval(RTL_INT a,long b)
 {
-	return _return_int_eval(a,standardize_input(std::to_string(b)),FUNCT,LINE);
+	return return_int_eval(a,standardize_input(std::to_string(b)));
 }
 
 
-
+//TODO: is it LSB -> MSB or MSB -> LSB
 inline static RTL_INT V_REDUX(RTL_INT a, const char lut[4][4])
 {
 	std::size_t end = get_len(a)-1;
 	char result = get_bit(a, end);
-	for(std::size_t i=end-1;  i < end; i--)
-		result = v_binary_op(get_bit(a, i), result, lut);
+	auto bit_a = get_bitstring(a).crbegin();
+    for (; bit_a != get_bitstring(a).crend(); ++bit_a)
+		result = v_binary_op(*bit_a, result, lut);
 
 	return return_internal_representation(false, 1, std::string(1,result));
 }
@@ -581,8 +575,10 @@ inline static RTL_INT V_REDUX(RTL_INT a, RTL_INT b, const char lut[4][4])
 	a = resize(a, std_length);
 	b = resize(b, std_length);
 
-	for(std::size_t i=std_length-1;  i < std_length; i--)
-		PUSH_MSB(result, v_binary_op(get_bit(a, i), get_bit(b, i),lut));
+	auto bit_a = get_bitstring(a).crbegin();
+	auto bit_b = get_bitstring(b).crbegin();
+	for (; bit_a != get_bitstring(a).crend() && bit_b != get_bitstring(b).crend(); ++bit_a, ++bit_b)
+		PUSH_MSB(result, v_binary_op(*bit_a, *bit_b,lut));
 
 	return return_internal_representation(false, std_length, result);
 }
@@ -592,12 +588,13 @@ inline static RTL_INT V_INCREMENT(RTL_INT a, const char lut_adder[4][4], const c
 	std::string result = "";
 	char tmp_carry  = '0';
 	std::size_t std_length = get_len(a);
-	for(std::size_t i=std_length-1; i < std_length; i--)
-	{
-		PUSH_MSB(result, v_binary_op(get_bit(a, i), tmp_carry, lut_adder));
-		tmp_carry = v_binary_op(get_bit(a, i), tmp_carry, lut_carry);
+	
+	auto bit_a = get_bitstring(a).crbegin();
+    for (; bit_a != get_bitstring(a).crend(); ++bit_a) {
+		PUSH_MSB(result, v_binary_op(*bit_a,tmp_carry, lut_adder));
+		tmp_carry = v_binary_op(*bit_a, tmp_carry, lut_carry);
 	}
-	return return_internal_representation(is_signed(a), get_len(a), result);
+	return return_internal_representation(is_signed(a), result.size(), result);
 }
 
 /***
@@ -610,11 +607,11 @@ inline static RTL_INT V_INCREMENT(RTL_INT a, const char lut_adder[4][4], const c
 RTL_INT V_NEG(RTL_INT a)
 {
 	std::string result = "";
-	std::size_t std_length = get_len(a);
-	for(std::size_t i=std_length-1;  i < std_length; i--)
-		PUSH_MSB(result, v_not(get_bit(a, i)));
+	auto bit_a = get_bitstring(a).crbegin();
+    for (; bit_a != get_bitstring(a).crend(); ++bit_a)
+		PUSH_MSB(result, v_not(*bit_a));
 	
-	return return_internal_representation(false, std_length, result);
+	return return_internal_representation(false, result.length(), result);
 }
 
 RTL_INT V_PLUS_PLUS(RTL_INT a)
@@ -712,11 +709,20 @@ RTL_INT V_REDUCTION_XNOR(RTL_INT a,RTL_INT b)
 // TODO: fix me!!! this is bit by bit comparison!!!
 RTL_INT V_CASE_EQUAL(RTL_INT a,RTL_INT b)
 {
-	return return_internal_representation(false, 1, (return_int_eval(a,b) == EQUAL)? "1": "0");
+	std::size_t std_length = size_max(get_len(a), get_len(b));
+	a = resize(a, std_length);
+	b = resize(b, std_length);
+
+	auto bit_a = get_bitstring(a).crbegin();
+	auto bit_b = get_bitstring(b).crbegin();
+	for (; bit_a != get_bitstring(a).crend() && bit_b != get_bitstring(b).crend(); ++bit_a, ++bit_b)
+		if(*bit_a != *bit_b)	return V_ZERO;
+	
+	return V_ONE;
 }
 RTL_INT V_CASE_NOT_EQUAL(RTL_INT a,RTL_INT b)
 {
-	return return_internal_representation(false, 1, (return_int_eval(a,b) != EQUAL)? "1": "0");
+	return V_LOGICAL_NOT(V_CASE_EQUAL(a,b));
 }
 
 /**
@@ -866,10 +872,12 @@ RTL_INT V_ADD(RTL_INT a,RTL_INT b)
 	a = resize(a, std_length);
 	b = resize(b, std_length);
 
-	for(std::size_t i=std_length-1; i < std_length; i--)
+	auto bit_a = get_bitstring(a).crbegin();
+	auto bit_b = get_bitstring(b).crbegin();
+	for (; bit_a != get_bitstring(a).crend() && bit_b != get_bitstring(b).crend(); ++bit_a, ++bit_b)
 	{
-		PUSH_MSB(result,add_func(get_bit(a, i), get_bit(b, i), previous_carry));
-		PUSH_MSB(result,carry_func(get_bit(a, i), get_bit(b, i), previous_carry));
+		PUSH_MSB(result,add_func(*bit_a, *bit_b, previous_carry));
+		PUSH_MSB(result,carry_func(*bit_a, *bit_b, previous_carry));
 	}
 	PUSH_MSB(result,previous_carry);
 
@@ -889,13 +897,16 @@ RTL_INT V_MULTIPLY(RTL_INT a,RTL_INT b)
 	if(is_dont_care_string(get_bitstring(a)) || is_dont_care_string(get_bitstring(b)))
 		return V_UNK;
 
-	RTL_INT result = return_internal_representation(is_signed(a) && is_signed(b),0,"0");
 	a = readjust_size(a);
 	b = readjust_size(b);
-	std::size_t std_length = get_len(a);
-	for(std::size_t i=std_length-1; i < std_length; i--)
-		if(get_bit(a, i) == '1')
-			result = V_ADD(result,V_SHIFT_LEFT(b, std_length-1-i));
+	std::size_t std_length = std::max(get_len(b),get_len(a))*2;
+	RTL_INT result = return_internal_representation(is_signed(a) && is_signed(b),std_length,"0");
+	
+	std::size_t current_shift =0;
+	auto bit_a = get_bitstring(a).crbegin();
+	for (; bit_a != get_bitstring(a).crend(); ++bit_a, ++current_shift)
+		if(*bit_a == '1')
+			result = V_ADD(result,V_SHIFT_LEFT(b, current_shift));
 
 	// TODO what size do we go to ??
 	return result;
@@ -966,20 +977,8 @@ RTL_INT V_MOD(RTL_INT a,RTL_INT b)
 RTL_INT V_TERNARY(RTL_INT a, RTL_INT b, RTL_INT c)
 {
 	/*	if a evaluates properly	*/
-	RTL_INT eval = V_REDUCTION_OR(a);
-	if(return_int_eval(eval, 1) == EQUAL)	
-	{	
-		//std::cout << get_bitstring(eval) << " evaluates to true\n";
-		return b;
-	}
-	else if(return_int_eval(eval, 0) == EQUAL)	
-	{
-		//std::cout << get_bitstring(eval) << " evaluates to false\n";
-		return c; 
-	}
-	else		
-	{				
-		//std::cout << get_bitstring(eval) << " evaluates to unknown\n";					
-		return V_REDUX(b,c,l_ternary);
-	}
+	EVAL_RESULT eval = return_int_eval(V_LOGICAL_NOT(a),V_ZERO);
+	if(eval == UNKNOWN)		return V_REDUX(b,c,l_ternary);
+	else if(eval == EQUAL)	return b;
+	else					return c;
 }

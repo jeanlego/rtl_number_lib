@@ -23,10 +23,9 @@ typedef enum
     EQUAL,
     UNKNOWN
 }EVAL_RESULT;
-#define return_int_eval(a,b) _return_int_eval(a, b, __func__, __LINE__)
-EVAL_RESULT _return_int_eval(RTL_INT a, RTL_INT b, const char *FUNCT, int LINE);
-EVAL_RESULT _return_int_eval(long a, RTL_INT b, const char *FUNCT, int LINE);
-EVAL_RESULT _return_int_eval(RTL_INT a, long b, const char *FUNCT, int LINE);
+EVAL_RESULT return_int_eval(RTL_INT a, RTL_INT b);
+EVAL_RESULT return_int_eval(long a, RTL_INT b);
+EVAL_RESULT return_int_eval(RTL_INT a, long b);
 
 /**
  * Unary Operator
