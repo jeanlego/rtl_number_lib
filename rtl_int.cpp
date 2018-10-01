@@ -613,7 +613,7 @@ static std::vector<std::string> V_NEG(std::vector<std::string> a)
 	for(std::size_t i=std_length-1;  i < std_length; i--)
 		PUSH_MSB(result, v_not(get_bit(a, i)));
 	
-	return return_internal_representation(false, 1, result);
+	return return_internal_representation(false, std_length, result);
 }
 
 static std::vector<std::string> V_PLUS_PLUS(std::vector<std::string> a)
@@ -873,17 +873,17 @@ static std::vector<std::string> V_TERNARY(std::vector<std::string> a, std::vecto
 	std::vector<std::string> eval = V_REDUCTION_OR(a);
 	if(internal_quick_eval(eval, V_ONE) == 0)	
 	{	
-		std::cout << get_bitstring(eval) << " evaluates to true\n";
+		//std::cout << get_bitstring(eval) << " evaluates to true\n";
 		return b;
 	}
 	else if(internal_quick_eval(eval, V_ZERO) == 0)	
 	{
-		std::cout << get_bitstring(eval) << " evaluates to false\n";
+		//std::cout << get_bitstring(eval) << " evaluates to false\n";
 		return c; 
 	}
 	else		
 	{				
-		std::cout << get_bitstring(eval) << " evaluates to unknown\n";					
+		//std::cout << get_bitstring(eval) << " evaluates to unknown\n";					
 		return V_REDUX(b,c,l_ternary);
 	}
 }
@@ -1018,7 +1018,7 @@ int main(int argc, char** argv)
 
 	if		(argc == 3)	std::cout << arithmetic(argv[1], argv[2]) << std::endl;
 	else if	(argc == 4)	std::cout << arithmetic(argv[1], argv[2], argv[3]) << std::endl;
-	else if (argc == 5)	std::cout << arithmetic(argv[1], argv[2], argv[3], argv[4], argv[5]) << std::endl;
+	else if (argc == 6)	std::cout << arithmetic(argv[1], argv[2], argv[3], argv[4], argv[5]) << std::endl;
 	else				std::cout << "ERROR: Too Many Arguments: " << std::to_string(argc - 1) << "!" << std::endl;
 
 	return 0;

@@ -2,31 +2,62 @@
 # Unary operations
 
 # bitwise 
-Bitwise-Not,    ~,  4'b1010,    4'b0101
+Bitwise-Not,			~,  4'b1010,	4'b0101
+Bitwise-minus,			-,  4'b1010,	4'b0110
+Bitwise-plus,			+,  4'b1010,	4'sb0101
+Bitwise-inc_up,			++,	4'b1010,	4'b1011
+Bitwise-inc_down,		--,	4'b1010,	4'b1001
+Bitwise-and,			&,  4'b1010,	1'b0
+Bitwise-or,				|,  4'b1010,	1'b1
+Bitwise-xor,			^,  4'b1010,	1'b0
+Bitwise-nand,			~&,	4'b1010,	1'b1
+Bitwise-nor,			~|,	4'b1010,	1'b1
+Bitwise-xnor,			~^,	4'b1010,	1'b1
+Bitwise-Logical-Not,	!,  4'b1010,	1'b0
 
 #####################
 # Binary operations
 
 # bitwise
-Bitwise-And,    4'b1010,    &,  4'b1000,    4'b1000
-Bitwise-Or,     4'b1010,    |,  4'b1000,    4'b1000
-Bitwise-Nor,    4'b1010,    ~|, 4'b1000,    4'b1000
-Bitwise-Nand,   4'b1010,    ~&, 4'b1000,    4'b1000
-Bitwise-Xnor,   4'b1010,    ~^, 4'b1000,    4'b1000
-Bitwise-Xor,    4'b1010,    ^,  4'b1000,    4'b1000
+Bitwise-And,	4'b1010,	&,  4'b1000,	4'b1000
+Bitwise-Or,		4'b1010,	|,  4'b1000,	4'b1010
+Bitwise-Nor,	4'b1010,	~|, 4'b1000,	4'b0101
+Bitwise-Nand,   4'b1010,	~&, 4'b1000,	4'b0111
+Bitwise-Xnor,   4'b1010,	~^, 4'b1000,	4'b1101
+Bitwise-Xor,	4'b1010,	^,  4'b1000,	4'b0010
+
+# case equivalence
+Case-eq,		4'b1x10,	===,  4'b1x10,	1'b1
+Case-ne,		4'b1x11,	!==,  4'b1x10,	1'b1
+Case-ne,		4'b1x10,	!==,  4'b1x10,	1'b0
+Case-eq,		4'b1x11,	===,  4'b1x10,	1'b0
 
 # logical operation
-Logical-And,    4'b1010,    &&, 4'b1000,    1'b1
-Logical-Or,     4'b1010,    ||, 4'b1000,    1'b1
-Logical-Or,     4'b0000,    ||, 4'b1000,    1'b1
-Logical-Or,     4'b0000,    ||, 4'b0000,    1'b0
+Logical-And,			4'b1010,	&&, 4'b1000,	1'b1
+Logical-Or,				4'b1010,	||, 4'b1000,	1'b1
+Logical-Or,				4'b0000,	||, 4'b1000,	1'b1
+Logical-Or,				4'b0000,	||, 4'b0000,	1'b0	
+Logical-less,			4'b0000,	<,	4'b0001,	1'b1
+Logical-greater,		4'b0000,	>,	4'b0001,	1'b0	
+Logical-greater-equal,	4'b0000,	>=, 4'b0000,	1'b1	
+Logical-less-equal,		4'b0000,	<=, 4'b0000,	1'b1	
+Logical-equal,			4'b0000,	==, 4'b0000,	1'b1	
+Logical-not-equal,		4'b0000,	!=,	4'b0001,	1'b1
+
+# shift operation
+Shift-left,				5'b00100,	<<,		2'b10,	5'b10000
+Shift-right, 			5'b00100,	>>,		2'b10,	5'b00001
+Signed-shift-left,		5'b00100,	<<<,	2'b10,	5'b10000
+Signed-shift-right,		5'b10100,	>>>,	2'b10,	5'b11101
 
 # arithmetic
-Basic-Addition,         1,  +,  1,  2'sb10
-Basic-Subtraction,      4,  -,  2,  2'sb10
+Basic-Addition,			1,  +,  1,  2'sb10
+Basic-Subtraction,		4,  -,  2,  2'sb10
+Basic-Division,			10, /,  2,  3'sb0101
+Basic-Multiplication,	2,  *,  2,  3'sb0100
+Basic-Division,			10, %,  2,  1'sb0
+Basic-Multiplication,   2,  **,  0,  1'sb1
 
-#this is not supported since -2 is the equivalent 4 + (- 2)
-#Basic-Subtraction-2,    4,  +,  -2, 2'sb10
-
-Basic-Division,         10, /,  2,  3'sb0101
-Basic-Multiplication,   2,  *,  2,  3'sb0100
+#####################
+# Ternary operations
+if-else_switch,			1,  ?,  10,  :, 0, 10
