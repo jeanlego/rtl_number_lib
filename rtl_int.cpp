@@ -101,15 +101,6 @@ static std::size_t _v_strtoul(std::string orig_number, std::size_t radix, const 
 	}
 	
 	return std::strtoul(orig_number.c_str(),NULL,radix);
-
-	// for(std::size_t i=MSB; i < orig_number.length(); i++) {
-	// 	std::size_t bit = static_cast<std::size_t>(orig_number[i]);
-	// 	if(bit >= '0' && bit <= '9' )		result = (result * radix) +(bit - static_cast<std::size_t>('0'));
-	// 	else if(bit >= 'a' && bit <= 'f')	result = (result * radix) +(bit - static_cast<std::size_t>('a') + 10);
-	// 	else if(bit >= 'A' && bit <= 'F')	result = (result * radix) +(bit - static_cast<std::size_t>('A') + 10);
-	// }
-
-	// return result;
 }
 
 #define get_len(internal_bit_struct) _get_len(internal_bit_struct, __func__, __LINE__)
@@ -166,177 +157,6 @@ static std::vector<std::string> readjust_size(std::vector<std::string> internal_
 {
 	BRK
 	return resize(internal_bit_struct, get_len(internal_bit_struct));
-}
-
-static std::string to_bitstring(std::string orig_string, std::size_t radix)
-{
-	BRK
-	std::string result = "";	
-	assert_string_of_radix(orig_string,radix);
-	while(orig_string != "")
-	{
-		switch(radix)
-		{
-			case 10:
-			{
-				std::string new_number = "";
-				short prev = '0';
-				short flag = 0;
-				for(size_t i=orig_string.length()-1; i<orig_string.length(); i--)
-				{
-					short current_digit = (orig_string[i]-'0');
-					short new_pair = (prev%2)*10 + current_digit;
-					std::string div = std::to_string(new_pair/2);
-					std::string rem = std::to_string(new_pair%2);
-
-					prev = current_digit;
-					if(div != "0" && !flag)
-						flag = 1;
-
-					if(flag)
-						new_number.append(div);
-					
-					if(i == MSB)
-					{
-						PUSH_MS_BITSTRING(result, rem);
-						orig_string = new_number;
-					}
-				}
-				break;
-			}
-			case 2:		//fallthrough
-			case 8:		//fallthrough
-			case 16:
-			{
-				int lsb = std::tolower(orig_string.back()); 
-				orig_string.pop_back();
-				switch(radix)
-				{
-					case 2:
-					{
-						switch(lsb)
-						{
-							case '0': PUSH_MS_BITSTRING(result, "0");	break;
-							case '1': PUSH_MS_BITSTRING(result, "1");	break;
-							case 'x': PUSH_MS_BITSTRING(result, "x");	break;
-							case 'z': PUSH_MS_BITSTRING(result, "z");	break;
-							default:  bad_value(lsb);
-						}
-						break;
-					}
-					case 8:
-					{
-						switch(lsb)
-						{
-							case '0': PUSH_MS_BITSTRING(result, "000");	break;
-							case '1': PUSH_MS_BITSTRING(result, "001");	break;
-							case '2': PUSH_MS_BITSTRING(result, "010");	break;
-							case '3': PUSH_MS_BITSTRING(result, "011");	break;
-							case '4': PUSH_MS_BITSTRING(result, "100");	break;
-							case '5': PUSH_MS_BITSTRING(result, "101");	break;
-							case '6': PUSH_MS_BITSTRING(result, "110");	break;
-							case '7': PUSH_MS_BITSTRING(result, "111");	break;
-							case 'x': PUSH_MS_BITSTRING(result, "xxx");	break;
-							case 'z': PUSH_MS_BITSTRING(result, "zzz");	break;
-							default:  bad_value(lsb);
-						}
-						break;
-					}
-					case 16:
-					{
-						switch(lsb)
-						{
-							case '0': PUSH_MS_BITSTRING(result, "0000");	break;
-							case '1': PUSH_MS_BITSTRING(result, "0001");	break;
-							case '2': PUSH_MS_BITSTRING(result, "0010");	break;
-							case '3': PUSH_MS_BITSTRING(result, "0011");	break;
-							case '4': PUSH_MS_BITSTRING(result, "0100");	break;
-							case '5': PUSH_MS_BITSTRING(result, "0101");	break;
-							case '6': PUSH_MS_BITSTRING(result, "0110");	break;
-							case '7': PUSH_MS_BITSTRING(result, "0111");	break;
-							case '8': PUSH_MS_BITSTRING(result, "1000");	break;
-							case '9': PUSH_MS_BITSTRING(result, "1001");	break;
-							case 'a': PUSH_MS_BITSTRING(result, "1010");	break;
-							case 'b': PUSH_MS_BITSTRING(result, "1011");	break;
-							case 'c': PUSH_MS_BITSTRING(result, "1100");	break;
-							case 'd': PUSH_MS_BITSTRING(result, "1101");	break;
-							case 'e': PUSH_MS_BITSTRING(result, "1110");	break;
-							case 'f': PUSH_MS_BITSTRING(result, "1111");	break;
-							case 'x': PUSH_MS_BITSTRING(result, "xxxx");	break;
-							case 'z': PUSH_MS_BITSTRING(result, "zzzz");	break;
-							default:  bad_value(lsb);
-						}
-						break;
-					}
-					default:
-					{
-						std::cout << "Invalid base " << std::to_string(radix) << " number: " << orig_string << ".\n";
-						std::abort();
-					}
-				}
-				break;
-			}
-			default:
-			{
-				std::cout << "Invalid base " << std::to_string(radix) << " number: " << orig_string << ".\n";
-				std::abort();
-			}
-		}
-	}
-	return result;
-}
-
-//resize bitstring to length
-
-
-static std::vector<std::string> standardize_input(std::string input_number)
-{	
-	BRK
-	//remove underscores
-	input_number.erase(std::remove(input_number.begin(), input_number.end(), '_'), input_number.end());
-	std::vector<std::string> to_return = V_BAD;
-
-	std::size_t loc = input_number.find("\'");
-	if(loc == std::string::npos)
-	{
-		input_number.insert(0, "\'sd");
-		loc = 0;
-	}
-
-	if(loc == 0)
-	{
-		std::string bit_len = std::to_string(DEFAULT_BIT_WIDTH);
-		input_number.insert(0, bit_len);
-		loc = bit_len.length();
-	}
-
-	to_return = resize(to_return, v_strtoul(input_number.substr(0,loc),10));
-
-	if(std::tolower(input_number[loc+1]) == 's')
-	{
-		input_number.erase (input_number.begin()+static_cast<long>(loc)+1);
-		to_return = set_sign(to_return,true);
-	}
-	else
-	{
-		to_return = set_sign(to_return,false);
-	}
-
-
-	switch(std::tolower(input_number[loc+1]))
-	{
-		case 'b':	to_return[2] = to_bitstring(input_number.substr(loc+2), 2); break;
-		case 'o':	to_return[2] = to_bitstring(input_number.substr(loc+2), 8); break;
-		case 'd':	to_return[2] = to_bitstring(input_number.substr(loc+2), 10); break;
-		case 'h':	to_return[2] = to_bitstring(input_number.substr(loc+2), 16); break;
-		default:
-		{
-			std::cout << "Invalid base " << std::string(1,input_number[loc+1]) << " number: " << input_number << ".\n";
-			std::abort();
-		}
-	}
-
-	return readjust_size(to_return);
 }
 
 // convert internal format to verilog
@@ -717,70 +537,147 @@ static std::vector<std::string> V_CASE_NOT_EQUAL(std::vector<std::string> a,std:
 	return return_internal_representation(false, 1, (internal_quick_eval(a,b) != 0)? "1": "0");
 }
 
+/**
+ * Shift operations
+ */
+static std::vector<std::string> V_SIGNED_SHIFT_LEFT(std::vector<std::string> a, std::vector<std::string> b)
+{
+	if(is_dont_care_string(get_bitstring(b)))	
+		return V_UNK;
+
+	int compare_result = internal_quick_eval(b, V_ZERO);
+	if(compare_result == 0)						return a;
+	else if(compare_result == -1)				return V_SIGNED_SHIFT_RIGHT(a,V_MINUS(b));
+	else										return V_SIGNED_SHIFT_LEFT(a,v_strtoul(get_bitstring(b),2));
+
+}
 static std::vector<std::string> V_SIGNED_SHIFT_LEFT(std::vector<std::string> a, std::size_t b)
 {
 	get_bitstring(a).append(std::string(b,'0'));
 	return readjust_size(a); 
 }
 
+static std::vector<std::string> V_SIGNED_SHIFT_RIGHT(std::vector<std::string> a, std::vector<std::string> b)
+{
+	if(is_dont_care_string(get_bitstring(b)))	
+		return V_UNK;
+		
+	int compare_result = internal_quick_eval(b, V_ZERO);
+	if(compare_result == 0)						return a;
+	else if(compare_result == -1)				return V_SIGNED_SHIFT_LEFT(a,V_MINUS(b));
+	else										return V_SIGNED_SHIFT_RIGHT(a,v_strtoul(get_bitstring(b),2));
+
+}
 static std::vector<std::string> V_SIGNED_SHIFT_RIGHT(std::vector<std::string> a, std::size_t b)
 {
 	get_bitstring(a) = get_bitstring(a).substr(0,get_len(a)-b);
 	return readjust_size(a); 
 }
 
+static std::vector<std::string> V_SHIFT_LEFT(std::vector<std::string> a, std::vector<std::string> b)
+{
+	if(is_dont_care_string(get_bitstring(b)))	
+		return V_UNK;
+		
+	int compare_result = internal_quick_eval(b, V_ZERO);
+	if(compare_result == 0)						return a;
+	else if(compare_result == -1)				return V_SHIFT_RIGHT(a,V_MINUS(b));
+	else										return V_SHIFT_LEFT(a,v_strtoul(get_bitstring(b),2));
+
+}
 static std::vector<std::string> V_SHIFT_LEFT(std::vector<std::string> a, std::size_t b)
 {
 	return V_SIGNED_SHIFT_LEFT(set_sign(a, false),b);  
 }
 
+static std::vector<std::string> V_SHIFT_RIGHT(std::vector<std::string> a, std::vector<std::string> b)
+{
+	if(is_dont_care_string(get_bitstring(b)))	
+		return V_UNK;
+		
+	int compare_result = internal_quick_eval(b, V_ZERO);
+	if(compare_result == 0)						return a;
+	else if(compare_result == -1)				return V_SHIFT_LEFT(a,V_MINUS(b));
+	else										return V_SHIFT_RIGHT(a,v_strtoul(get_bitstring(b),2));
+
+}
 static std::vector<std::string> V_SHIFT_RIGHT(std::vector<std::string> a, std::size_t b)
 {
 	return V_SIGNED_SHIFT_RIGHT(set_sign(a, false),b); 
 }
 
+/**
+ * Logical Operations
+ */
 static std::vector<std::string> V_LOGICAL_AND(std::vector<std::string> a,std::vector<std::string> b)
 {
+	if(is_dont_care_string(get_bitstring(a)) || is_dont_care_string(get_bitstring(b)))
+		return V_UNK;
+
 	return V_REDUCTION_AND(V_REDUCTION_OR(a),V_REDUCTION_OR(b));
 }
 
 static std::vector<std::string> V_LOGICAL_OR(std::vector<std::string> a,std::vector<std::string> b)
 {
+	if(is_dont_care_string(get_bitstring(a)) || is_dont_care_string(get_bitstring(b)))
+		return V_UNK;
+
 	return V_REDUCTION_OR(V_REDUCTION_OR(a),V_REDUCTION_OR(b));
 }
 
 static std::vector<std::string> V_LT(std::vector<std::string> a,std::vector<std::string> b)
 {
+	if(is_dont_care_string(get_bitstring(a)) || is_dont_care_string(get_bitstring(b)))
+		return V_UNK;
+
 	return	return_internal_representation(false, 1, (internal_quick_eval(a,b) == -1) 	? "1":"0");
 }
 
 static std::vector<std::string> V_GT(std::vector<std::string> a,std::vector<std::string> b)
 {
+	if(is_dont_care_string(get_bitstring(a)) || is_dont_care_string(get_bitstring(b)))
+		return V_UNK;
+
 	return	return_internal_representation(false, 1, (internal_quick_eval(a,b) == 1) 	? "1":"0");
 }
 
 static std::vector<std::string> V_LE(std::vector<std::string> a,std::vector<std::string> b)
 {
+	if(is_dont_care_string(get_bitstring(a)) || is_dont_care_string(get_bitstring(b)))
+		return V_UNK;
+
 	return	return_internal_representation(false, 1, (internal_quick_eval(a,b) != 1) 	? "1":"0");
 }
 
 static std::vector<std::string> V_GE(std::vector<std::string> a,std::vector<std::string> b)
 {
+	if(is_dont_care_string(get_bitstring(a)) || is_dont_care_string(get_bitstring(b)))
+		return V_UNK;
+
 	return	return_internal_representation(false, 1, (internal_quick_eval(a,b) != -1) 	? "1":"0");
 }
 
 static std::vector<std::string> V_EQUAL(std::vector<std::string> a,std::vector<std::string> b)
 {
+	if(is_dont_care_string(get_bitstring(a)) || is_dont_care_string(get_bitstring(b)))
+		return V_UNK;
+
 	return	return_internal_representation(false, 1, (internal_quick_eval(a,b) == 0) 	? "1":"0");
 }
 
 static std::vector<std::string> V_NOT_EQUAL(std::vector<std::string> a,std::vector<std::string> b)
 {
+	if(is_dont_care_string(get_bitstring(a)) || is_dont_care_string(get_bitstring(b)))
+		return V_UNK;
+
 	return	return_internal_representation(false, 1, (internal_quick_eval(a,b) != 0) 	? "1":"0");
 }
 
 static std::vector<std::string> V_ADD(std::vector<std::string> a,std::vector<std::string> b)
 {
+	if(is_dont_care_string(get_bitstring(a)) || is_dont_care_string(get_bitstring(b)))
+		return V_UNK;
+
 	char previous_carry = '0';
 	std::string result = "";
 	std::size_t std_length = size_max(get_len(a), get_len(b));
@@ -799,11 +696,17 @@ static std::vector<std::string> V_ADD(std::vector<std::string> a,std::vector<std
 
 static std::vector<std::string> V_MINUS(std::vector<std::string> a,std::vector<std::string> b)
 {
+	if(is_dont_care_string(get_bitstring(a)) || is_dont_care_string(get_bitstring(b)))
+		return V_UNK;
+
 	return V_ADD(a, V_MINUS(b));
 }
 
 static std::vector<std::string> V_MULTIPLY(std::vector<std::string> a,std::vector<std::string> b)
 {
+	if(is_dont_care_string(get_bitstring(a)) || is_dont_care_string(get_bitstring(b)))
+		return V_UNK;
+
 	std::vector<std::string> result = return_internal_representation(is_signed(a) && is_signed(b),0,"0");
 	a = readjust_size(a);
 	b = readjust_size(b);
@@ -818,6 +721,9 @@ static std::vector<std::string> V_MULTIPLY(std::vector<std::string> a,std::vecto
 
 static std::vector<std::string> V_POWER(std::vector<std::string> a,std::vector<std::string> b)
 {
+	if(is_dont_care_string(get_bitstring(a)) || is_dont_care_string(get_bitstring(b)))
+		return V_UNK;
+
 	std::vector<std::string> result = return_internal_representation(is_signed(a) && is_signed(b),0,"1");
 	while(internal_quick_eval(b,V_ZERO) > 0)
 	{
@@ -829,6 +735,10 @@ static std::vector<std::string> V_POWER(std::vector<std::string> a,std::vector<s
 }
 static std::vector<std::string> V_DIV(std::vector<std::string> a,std::vector<std::string> b)
 {
+	if(is_dont_care_string(get_bitstring(a)) || is_dont_care_string(get_bitstring(b))
+	|| internal_quick_eval(b, V_ZERO) == 0)
+		return V_UNK;
+
 	std::vector<std::string> result = return_internal_representation(is_signed(a) && is_signed(b),0,"0");
 	//TODO signed division!
 	while(internal_quick_eval(b, a) < 0)
@@ -848,6 +758,10 @@ static std::vector<std::string> V_DIV(std::vector<std::string> a,std::vector<std
 
 static std::vector<std::string> V_MOD(std::vector<std::string> a,std::vector<std::string> b)
 {
+	if(is_dont_care_string(get_bitstring(a)) || is_dont_care_string(get_bitstring(b))
+	|| internal_quick_eval(b, V_ZERO) == 0)
+		return V_UNK;
+
 	//TODO signed division!
 	while(internal_quick_eval(b, a) < 0)
 	{
@@ -894,7 +808,176 @@ static std::vector<std::string> V_TERNARY(std::vector<std::string> a, std::vecto
  *    /  ` /  \ |\ |  |  |__) /  \ |       |__  |    /  \ |  | 
  *    \__, \__/ | \|  |  |  \ \__/ |___    |    |___ \__/ |/\| 
  *                                                             
+ * 	This is used for testing purposes only, unused in ODIN as the input is already preprocessed
  */
+
+inline static std::string to_bitstring(std::string orig_string, std::size_t radix)
+{
+	BRK
+	std::string result = "";	
+	assert_string_of_radix(orig_string,radix);
+	while(orig_string != "")
+	{
+		switch(radix)
+		{
+			case 10:
+			{
+				std::string new_number = "";
+				short prev = '0';
+				short flag = 0;
+				for(size_t i=orig_string.length()-1; i<orig_string.length(); i--)
+				{
+					short current_digit = (orig_string[i]-'0');
+					short new_pair = (prev%2)*10 + current_digit;
+					std::string div = std::to_string(new_pair/2);
+					std::string rem = std::to_string(new_pair%2);
+
+					prev = current_digit;
+					if(div != "0" && !flag)
+						flag = 1;
+
+					if(flag)
+						new_number.append(div);
+					
+					if(i == MSB)
+					{
+						PUSH_MS_BITSTRING(result, rem);
+						orig_string = new_number;
+					}
+				}
+				break;
+			}
+			case 2:		//fallthrough
+			case 8:		//fallthrough
+			case 16:
+			{
+				int lsb = std::tolower(orig_string.back()); 
+				orig_string.pop_back();
+				switch(radix)
+				{
+					case 2:
+					{
+						switch(lsb)
+						{
+							case '0': PUSH_MS_BITSTRING(result, "0");	break;
+							case '1': PUSH_MS_BITSTRING(result, "1");	break;
+							case 'x': PUSH_MS_BITSTRING(result, "x");	break;
+							case 'z': PUSH_MS_BITSTRING(result, "z");	break;
+							default:  bad_value(lsb);
+						}
+						break;
+					}
+					case 8:
+					{
+						switch(lsb)
+						{
+							case '0': PUSH_MS_BITSTRING(result, "000");	break;
+							case '1': PUSH_MS_BITSTRING(result, "001");	break;
+							case '2': PUSH_MS_BITSTRING(result, "010");	break;
+							case '3': PUSH_MS_BITSTRING(result, "011");	break;
+							case '4': PUSH_MS_BITSTRING(result, "100");	break;
+							case '5': PUSH_MS_BITSTRING(result, "101");	break;
+							case '6': PUSH_MS_BITSTRING(result, "110");	break;
+							case '7': PUSH_MS_BITSTRING(result, "111");	break;
+							case 'x': PUSH_MS_BITSTRING(result, "xxx");	break;
+							case 'z': PUSH_MS_BITSTRING(result, "zzz");	break;
+							default:  bad_value(lsb);
+						}
+						break;
+					}
+					case 16:
+					{
+						switch(lsb)
+						{
+							case '0': PUSH_MS_BITSTRING(result, "0000");	break;
+							case '1': PUSH_MS_BITSTRING(result, "0001");	break;
+							case '2': PUSH_MS_BITSTRING(result, "0010");	break;
+							case '3': PUSH_MS_BITSTRING(result, "0011");	break;
+							case '4': PUSH_MS_BITSTRING(result, "0100");	break;
+							case '5': PUSH_MS_BITSTRING(result, "0101");	break;
+							case '6': PUSH_MS_BITSTRING(result, "0110");	break;
+							case '7': PUSH_MS_BITSTRING(result, "0111");	break;
+							case '8': PUSH_MS_BITSTRING(result, "1000");	break;
+							case '9': PUSH_MS_BITSTRING(result, "1001");	break;
+							case 'a': PUSH_MS_BITSTRING(result, "1010");	break;
+							case 'b': PUSH_MS_BITSTRING(result, "1011");	break;
+							case 'c': PUSH_MS_BITSTRING(result, "1100");	break;
+							case 'd': PUSH_MS_BITSTRING(result, "1101");	break;
+							case 'e': PUSH_MS_BITSTRING(result, "1110");	break;
+							case 'f': PUSH_MS_BITSTRING(result, "1111");	break;
+							case 'x': PUSH_MS_BITSTRING(result, "xxxx");	break;
+							case 'z': PUSH_MS_BITSTRING(result, "zzzz");	break;
+							default:  bad_value(lsb);
+						}
+						break;
+					}
+					default:
+					{
+						std::cout << "Invalid base " << std::to_string(radix) << " number: " << orig_string << ".\n";
+						std::abort();
+					}
+				}
+				break;
+			}
+			default:
+			{
+				std::cout << "Invalid base " << std::to_string(radix) << " number: " << orig_string << ".\n";
+				std::abort();
+			}
+		}
+	}
+	return result;
+}
+
+inline static std::vector<std::string> standardize_input(std::string input_number)
+{	
+	BRK
+	//remove underscores
+	input_number.erase(std::remove(input_number.begin(), input_number.end(), '_'), input_number.end());
+	std::vector<std::string> to_return = V_BAD;
+
+	std::size_t loc = input_number.find("\'");
+	if(loc == std::string::npos)
+	{
+		input_number.insert(0, "\'sd");
+		loc = 0;
+	}
+
+	if(loc == 0)
+	{
+		std::string bit_len = std::to_string(DEFAULT_BIT_WIDTH);
+		input_number.insert(0, bit_len);
+		loc = bit_len.length();
+	}
+
+	to_return = resize(to_return, v_strtoul(input_number.substr(0,loc),10));
+
+	if(std::tolower(input_number[loc+1]) == 's')
+	{
+		input_number.erase (input_number.begin()+static_cast<long>(loc)+1);
+		to_return = set_sign(to_return,true);
+	}
+	else
+	{
+		to_return = set_sign(to_return,false);
+	}
+	
+	switch(std::tolower(input_number[loc+1]))
+	{
+		case 'b':	to_return[2] = to_bitstring(input_number.substr(loc+2), 2); break;
+		case 'o':	to_return[2] = to_bitstring(input_number.substr(loc+2), 8); break;
+		case 'd':	to_return[2] = to_bitstring(input_number.substr(loc+2), 10); break;
+		case 'h':	to_return[2] = to_bitstring(input_number.substr(loc+2), 16); break;
+		default:
+		{
+			std::cout << "Invalid base " << std::string(1,input_number[loc+1]) << " number: " << input_number << ".\n";
+			std::abort();
+		}
+	}
+
+	return readjust_size(to_return);
+}
+
 std::string arithmetic(std::string op, std::string a_in)
 {
 	std::vector<std::string> a = standardize_input(a_in);
@@ -935,69 +1018,27 @@ std::string arithmetic(std::string a_in, std::string op, std::string b_in)
 							(op == "===" )	?		V_CASE_EQUAL(a,b):
 							(op == "!==")	?		V_CASE_NOT_EQUAL(a,b):
 							/*	Shift Operator	*/
-							(op == "<<")	?		(is_dont_care_string(get_bitstring(b))) 	? 	V_UNK:
-													(internal_quick_eval(b, V_ZERO)==0)			?	a:
-													(internal_quick_eval(b, V_ZERO)==-1)		?	V_SHIFT_RIGHT(a,v_strtoul(get_bitstring(V_MINUS(b)),2)):
-																									V_SHIFT_LEFT(a,v_strtoul(get_bitstring(b),2)):
-							(op == "<<<")	?		(is_dont_care_string(get_bitstring(b))) 	? 	V_UNK:
-													(internal_quick_eval(b, V_ZERO)==0)			?	a:
-													(internal_quick_eval(b, V_ZERO)==-1)		?	V_SIGNED_SHIFT_RIGHT(a,v_strtoul(get_bitstring(V_MINUS(b)),2)):
-																									V_SIGNED_SHIFT_LEFT(a,v_strtoul(get_bitstring(b),2)):
-							(op == ">>")	?		(is_dont_care_string(get_bitstring(b))) 	? 	V_UNK:
-													(internal_quick_eval(b, V_ZERO)==0)			?	a:
-													(internal_quick_eval(b, V_ZERO)==-1)		?	V_SHIFT_LEFT(a,v_strtoul(get_bitstring(V_MINUS(b)),2)):
-																									V_SHIFT_RIGHT(a,v_strtoul(get_bitstring(b),2)):
-							(op == ">>>")	?		(is_dont_care_string(get_bitstring(b))) 	? 	V_UNK:
-													(internal_quick_eval(b, V_ZERO)==0)			?	a:
-													(internal_quick_eval(b, V_ZERO)==-1)		?	V_SIGNED_SHIFT_LEFT(a,v_strtoul(get_bitstring(V_MINUS(b)),2)):
-																									V_SIGNED_SHIFT_RIGHT(a,v_strtoul(get_bitstring(b),2)):
+							(op == "<<")	?		V_SHIFT_LEFT(a,b):
+							(op == "<<<")	?		V_SIGNED_SHIFT_LEFT(a,b):
+							(op == ">>")	?		V_SHIFT_RIGHT(a,b):
+							(op == ">>>")	?		V_SIGNED_SHIFT_LEFT(a,b):
 							/* Logical Operators */
-							(op == "&&")	?		(is_dont_care_string(get_bitstring(a))
-													|| is_dont_care_string(get_bitstring(b))) 	? 	V_UNK:
-																									V_LOGICAL_AND(a,b):
-							(op == "||")	?		(is_dont_care_string(get_bitstring(a))
-													|| is_dont_care_string(get_bitstring(b))) 	? 	V_UNK:
-																									V_LOGICAL_OR(a,b):
-							(op == "<")		?		(is_dont_care_string(get_bitstring(a))
-													|| is_dont_care_string(get_bitstring(b))) 	? 	V_UNK:
-																									V_LT(a,b):																																													
-							(op == ">")		?		(is_dont_care_string(get_bitstring(a))
-													|| is_dont_care_string(get_bitstring(b))) 	? 	V_UNK:
-																									V_GT(a,b):
-							(op == "<=")	?		(is_dont_care_string(get_bitstring(a))
-													|| is_dont_care_string(get_bitstring(b))) 	? 	V_UNK:
-																									V_LE(a,b):
-							(op == ">=")	?		(is_dont_care_string(get_bitstring(a))
-													|| is_dont_care_string(get_bitstring(b))) 	? 	V_UNK:
-																									V_GE(a,b):
-							(op == "==")	?		(is_dont_care_string(get_bitstring(a))
-													|| is_dont_care_string(get_bitstring(b))) 	? 	V_UNK:
-																									V_EQUAL(a,b):
-							(op == "!=")	?		(is_dont_care_string(get_bitstring(a))
-													|| is_dont_care_string(get_bitstring(b))) 	? 	V_UNK:
-																									V_NOT_EQUAL(a,b):
+							(op == "&&")	?		V_LOGICAL_AND(a,b):
+							(op == "||")	?		V_LOGICAL_OR(a,b):
+							(op == "<")		?		V_LT(a,b):																																													
+							(op == ">")		?		V_GT(a,b):
+							(op == "<=")	?		V_LE(a,b):
+							(op == ">=")	?		V_GE(a,b):
+							(op == "==")	?		V_EQUAL(a,b):
+							(op == "!=")	?		V_NOT_EQUAL(a,b):
 							/* arithmetic Operators */																
-							(op == "+")		?		(is_dont_care_string(get_bitstring(a))
-													|| is_dont_care_string(get_bitstring(b))) 	? 	V_UNK:
-																									V_ADD(a,b):
-							(op == "-")		?		(is_dont_care_string(get_bitstring(a))
-													|| is_dont_care_string(get_bitstring(b))) 	? 	V_UNK:
-																									V_MINUS(a,b):
-							(op == "*")		?		(is_dont_care_string(get_bitstring(a))
-													|| is_dont_care_string(get_bitstring(b))) 	? 	V_UNK:
-																									V_MULTIPLY(a,b):
-							(op == "**")	?		(is_dont_care_string(get_bitstring(a))
-													|| is_dont_care_string(get_bitstring(b))) 	? 	V_UNK:
-																									V_POWER(a,b):
+							(op == "+")		?		V_ADD(a,b):
+							(op == "-")		?		V_MINUS(a,b):
+							(op == "*")		?		V_MULTIPLY(a,b):
+							(op == "**")	?		V_POWER(a,b):
 							/* cannot div by 0 */
-							(op == "/")		?		(is_dont_care_string(get_bitstring(a))
-													|| is_dont_care_string(get_bitstring(b))
-													|| get_bitstring(V_LE(b, V_ZERO)) == "1")	?	V_UNK:
-																									V_DIV(a,b):
-							(op == "%")		?		(is_dont_care_string(get_bitstring(a))
-													|| is_dont_care_string(get_bitstring(b))
-													|| get_bitstring(V_LE(b, V_ZERO)) == "1")	?	V_UNK:
-																									V_MOD(a,b):																																																																																																																																																																																																															
+							(op == "/")		?		V_DIV(a,b):
+							(op == "%")		?		V_MOD(a,b):																																																																																																																																																																																																															
 													bad_ops(op));
 }
 
@@ -1008,7 +1049,7 @@ std::string arithmetic(std::string a_in, std::string op1 ,std::string b_in, std:
 	std::vector<std::string> c = standardize_input(c_in);
 	
 	 /* return Process Operator via ternary */
-	return	v_bin_string(	(op1 != "?")	?	bad_ops(op1):
+	return	v_bin_string(	(op1 == "?")	?	bad_ops(op1):
 							(op2 != ":")	?	bad_ops(op2):
 												V_TERNARY(a,b,c));
 }
