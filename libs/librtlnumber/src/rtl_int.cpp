@@ -102,9 +102,9 @@ inline static std::size_t _v_strtoul(std::string orig_number, std::size_t radix,
 	
 	return std::strtoul(orig_number.c_str(),NULL,static_cast<int>(radix));
 }
-
+#define is_signed(bits)	(bits[0] == "0")? 0 : 1
 #define get_len(internal_bit_struct) _get_len(internal_bit_struct, __func__, __LINE__)
-inline static std::size_t _get_len(RTL_INT internal_bit_struct, const char *FUNCT, int LINE)
+inline static std::size_t _get_len(RTL_INT& internal_bit_struct, const char *FUNCT, int LINE)
 {
 	BRK
 	std::size_t defined_size = _v_strtoul(internal_bit_struct[1],10, FUNCT, LINE);
@@ -112,8 +112,22 @@ inline static std::size_t _get_len(RTL_INT internal_bit_struct, const char *FUNC
 
 	if(defined_size == 0)
 		return current_bit_width;
+	
 	else
+	{
+		//expand to length
+		if(defined_size > current_bit_width)
+		{
+			std::string padding_bits(defined_size-current_bit_width, (!is_signed(internal_bit_struct) || internal_bit_struct[2][MSB] =='x')? '0': internal_bit_struct[2][MSB]);
+			internal_bit_struct[2].insert(MSB,padding_bits);
+		}
+
+		//truncate to length
+		else if (defined_size < current_bit_width)
+			internal_bit_struct[2].erase(MSB,current_bit_width-defined_size);
+
 		return defined_size;
+	}
 }
 
 #define get_bit(int_bits, location) _get_bit(int_bits, location, __func__, __LINE__)
@@ -129,26 +143,11 @@ inline static char _get_bit(RTL_INT internal_bit_struct, std::size_t location, c
 }
 
 #define is_signed(bits)	(bits[0] == "0")? 0 : 1
-inline static RTL_INT set_sign(RTL_INT internal_binaries, bool new_sign)
-{
-	BRK
-	return return_internal_representation(new_sign && is_signed(internal_binaries), v_strtoul(internal_binaries[1],10), internal_binaries[2]);
-}
 
 inline static RTL_INT resize(RTL_INT internal_bit_struct, std::size_t len)
 {
-	BRK
-	//expand to length
-	if(len > get_len(internal_bit_struct))
-	{
-		std::string padding_bits(len-get_len(internal_bit_struct), (!is_signed(internal_bit_struct) || get_bit(internal_bit_struct,MSB) =='x')? '0': get_bit(internal_bit_struct,MSB));
-		internal_bit_struct[2].insert(MSB,padding_bits);
-	}
-
-	//truncate to length
-	else if (len < get_len(internal_bit_struct))
-		internal_bit_struct[2] = internal_bit_struct[2].substr(0,get_len(internal_bit_struct)-len);
-
+	internal_bit_struct[1] = std::to_string(len);
+	get_len(internal_bit_struct);
 	return internal_bit_struct;
 }
 
@@ -156,7 +155,8 @@ inline static RTL_INT resize(RTL_INT internal_bit_struct, std::size_t len)
 inline static RTL_INT readjust_size(RTL_INT internal_bit_struct)
 {
 	BRK
-	return resize(internal_bit_struct, get_len(internal_bit_struct));
+	get_len(internal_bit_struct);
+	return internal_bit_struct;
 }
 
 /**********************
@@ -285,7 +285,6 @@ RTL_INT standardize_input(std::string input_number)
 	BRK
 	//remove underscores
 	input_number.erase(std::remove(input_number.begin(), input_number.end(), '_'), input_number.end());
-	RTL_INT to_return = V_BAD;
 
 	std::size_t loc = input_number.find("\'");
 	if(loc == std::string::npos)
@@ -294,39 +293,30 @@ RTL_INT standardize_input(std::string input_number)
 		loc = 0;
 	}
 
-	if(loc == 0)
-	{
-		std::string bit_len = std::to_string(DEFAULT_BIT_WIDTH);
-		input_number.insert(0, bit_len);
-		loc = bit_len.length();
-	}
+	std::size_t len = DEFAULT_BIT_WIDTH;
+	if(loc != 0)
+		len = v_strtoul(input_number.substr(0,loc),10);
 
-	to_return = resize(to_return, v_strtoul(input_number.substr(0,loc),10));
-
+	bool sign = false;
 	if(std::tolower(input_number[loc+1]) == 's')
-	{
-		input_number.erase (input_number.begin()+static_cast<long>(loc)+1);
-		to_return = set_sign(to_return,true);
-	}
-	else
-	{
-		to_return = set_sign(to_return,false);
-	}
+		sign = true;
 	
-	switch(std::tolower(input_number[loc+1]))
+	std::string result = "";
+	switch(std::tolower(input_number[loc+1+sign]))
 	{
-		case 'b':	to_return[2] = to_bitstring(input_number.substr(loc+2), 2); break;
-		case 'o':	to_return[2] = to_bitstring(input_number.substr(loc+2), 8); break;
-		case 'd':	to_return[2] = to_bitstring(input_number.substr(loc+2), 10); break;
-		case 'h':	to_return[2] = to_bitstring(input_number.substr(loc+2), 16); break;
+		case 'b':	result = to_bitstring(input_number.substr(loc+2+sign), 2); break;
+		case 'o':	result = to_bitstring(input_number.substr(loc+2+sign), 8); break;
+		case 'd':	result = to_bitstring(input_number.substr(loc+2+sign), 10); break;
+		case 'h':	result = to_bitstring(input_number.substr(loc+2+sign), 16); break;
 		default:
 		{
 			std::cout << "Invalid base " << std::string(1,input_number[loc+1]) << " number: " << input_number << ".\n";
 			std::abort();
 		}
 	}
-
-	return readjust_size(to_return);
+	RTL_INT output = return_internal_representation(sign, len, result);
+	output = resize(output, len);
+	return output;
 }
 
 // convert internal format to verilog
@@ -629,7 +619,8 @@ inline static RTL_INT V_INCREMENT(RTL_INT a, const char lut_adder[4][4], const c
 		PUSH_MSB(result, v_binary_op(*bit_a,tmp_carry, lut_adder));
 		tmp_carry = v_binary_op(*bit_a, tmp_carry, lut_carry);
 	}
-	return return_internal_representation(is_signed(a), result.size(), result);
+	return return_internal_representation(is_signed(a), get_len(a)
+	, result);
 }
 
 /***
@@ -686,22 +677,22 @@ RTL_INT V_REDUCTION_XOR(RTL_INT a)
 
 RTL_INT V_REDUCTION_NAND(RTL_INT a)
 {
-	return V_REDUX(a, l_nand);
+	return V_NEG(V_REDUCTION_AND(a));
 }
 
 RTL_INT V_REDUCTION_NOR(RTL_INT a)
 {
-	return V_REDUX(a, l_nor);
+	return V_NEG(V_REDUCTION_OR(a));
 }
 
 RTL_INT V_REDUCTION_XNOR(RTL_INT a)
 {
-	return V_REDUX(a, l_xnor);
+	return V_NEG(V_REDUCTION_XOR(a));
 }
 
 RTL_INT V_LOGICAL_NOT(RTL_INT a)
 {
-	return V_REDUCTION_NOR(a);
+	return V_NEG(V_REDUCTION_OR(a));
 }
 
 /***
@@ -763,70 +754,52 @@ RTL_INT V_CASE_NOT_EQUAL(RTL_INT a,RTL_INT b)
 /**
  * Shift operations
  */
+
+inline static void shift_op(std::string& bit_string, std::size_t len, signed char padding_bit)
+{
+	//shift left , let it grow, let it grow ...
+	if(len > 0)	
+	{
+		bit_string.append(std::string(len,padding_bit));
+	}
+	//shift right, because it's the rightest thing to do
+	else if(len < 0)
+	{
+		bit_string.erase(bit_string.length()-len);
+		bit_string.insert(MSB,std::string(len,padding_bit));
+	}
+}
 RTL_INT V_SIGNED_SHIFT_LEFT(RTL_INT a, RTL_INT b)
 {
 	if(is_dont_care_string(get_bitstring(b)))	
 		return V_UNK;
-
-	EVAL_RESULT compare_result = return_int_eval(b, 0);
-	if(compare_result == EQUAL)					return a;
-	else if(compare_result == LESS_THAN)		return V_SIGNED_SHIFT_RIGHT(a,V_MINUS(b));
-	else										return V_SIGNED_SHIFT_LEFT(a,v_strtoul(get_bitstring(b),2));
-
+	
+	shift_op(get_bitstring(a), v_strtoul(get_bitstring(b),2), '0');
+	return a;
 }
-RTL_INT V_SIGNED_SHIFT_LEFT(RTL_INT a, std::size_t b)
+
+RTL_INT V_SHIFT_LEFT(RTL_INT a, RTL_INT b)
 {
-	get_bitstring(a).append(std::string(b,'0'));
-	return readjust_size(a); 
+	return V_SIGNED_SHIFT_LEFT(a,b);
 }
 
 RTL_INT V_SIGNED_SHIFT_RIGHT(RTL_INT a, RTL_INT b)
 {
 	if(is_dont_care_string(get_bitstring(b)))	
 		return V_UNK;
-		
-	EVAL_RESULT compare_result = return_int_eval(b, 0);
-	if(compare_result == EQUAL)					return a;
-	else if(compare_result == LESS_THAN)		return V_SIGNED_SHIFT_LEFT(a,V_MINUS(b));
-	else										return V_SIGNED_SHIFT_RIGHT(a,v_strtoul(get_bitstring(b),2));
-
-}
-RTL_INT V_SIGNED_SHIFT_RIGHT(RTL_INT a, std::size_t b)
-{
-	get_bitstring(a) = get_bitstring(a).substr(0,get_len(a)-b);
-	return readjust_size(a); 
-}
-
-RTL_INT V_SHIFT_LEFT(RTL_INT a, RTL_INT b)
-{
-	if(is_dont_care_string(get_bitstring(b)))	
-		return V_UNK;
-		
-	EVAL_RESULT compare_result = return_int_eval(b, 0);
-	if(compare_result == EQUAL)					return a;
-	else if(compare_result == LESS_THAN)		return V_SHIFT_RIGHT(a,V_MINUS(b));
-	else										return V_SHIFT_LEFT(a,v_strtoul(get_bitstring(b),2));
-
-}
-RTL_INT V_SHIFT_LEFT(RTL_INT a, std::size_t b)
-{
-	return V_SIGNED_SHIFT_LEFT(set_sign(a, false),b);  
+	
+	shift_op(get_bitstring(a), -1 *v_strtoul(get_bitstring(b),2), get_bit(b,MSB));
+	return a;
 }
 
 RTL_INT V_SHIFT_RIGHT(RTL_INT a, RTL_INT b)
 {
 	if(is_dont_care_string(get_bitstring(b)))	
 		return V_UNK;
-		
-	EVAL_RESULT compare_result = return_int_eval(b, 0);
-	if(compare_result == EQUAL)					return a;
-	else if(compare_result == LESS_THAN)		return V_SHIFT_LEFT(a,V_MINUS(b));
-	else										return V_SHIFT_RIGHT(a,v_strtoul(get_bitstring(b),2));
 
-}
-RTL_INT V_SHIFT_RIGHT(RTL_INT a, std::size_t b)
-{
-	return V_SIGNED_SHIFT_RIGHT(set_sign(a, false),b); 
+	shift_op(get_bitstring(a), -1 *v_strtoul(get_bitstring(b),2), '0');
+	return a;
+
 }
 
 /**
@@ -937,11 +910,13 @@ RTL_INT V_MULTIPLY(RTL_INT a,RTL_INT b)
 	std::size_t std_length = std::max(get_len(b),get_len(a))*2;
 	RTL_INT result = return_internal_representation(is_signed(a) && is_signed(b),std_length,"0");
 	
-	std::size_t current_shift =0;
-	auto bit_a = get_bitstring(a).crbegin();
-	for (; bit_a != get_bitstring(a).crend(); ++bit_a, ++current_shift)
+	for (auto bit_a = get_bitstring(a).crbegin(); bit_a != get_bitstring(a).crend(); ++bit_a)
+	{
+		//shift b left by 1
+		shift_op(get_bitstring(b), 1, '0');
 		if(*bit_a == '1')
-			result = V_ADD(result,V_SHIFT_LEFT(b, current_shift));
+			result = V_ADD(result,b);
+	}
 
 	// TODO what size do we go to ??
 	return result;
@@ -973,9 +948,9 @@ RTL_INT V_DIV(RTL_INT a,RTL_INT b)
 	{
 		RTL_INT count = return_internal_representation(is_signed(a) && is_signed(b),0,"1");
 		RTL_INT sub_with = b;
-		for( RTL_INT tmp = sub_with; return_int_eval(tmp, a) == LESS_THAN; tmp = V_SHIFT_LEFT(tmp, 1))
+		for( RTL_INT tmp = b; return_int_eval(tmp, a) == LESS_THAN; shift_op(get_bitstring(tmp), 1,'0'))
 		{
-			count = V_SHIFT_LEFT(count, 1);
+			shift_op(get_bitstring(count), 1,'0');
 			sub_with = tmp;
 		}
 		a = V_MINUS(a, sub_with);
@@ -994,7 +969,7 @@ RTL_INT V_MOD(RTL_INT a,RTL_INT b)
 	while(return_int_eval(b, a)  == LESS_THAN)
 	{
 		RTL_INT sub_with = b;
-		for( RTL_INT tmp = sub_with; return_int_eval(tmp, a) == LESS_THAN; tmp = V_SHIFT_LEFT(tmp, 1))
+		for( RTL_INT tmp = b; return_int_eval(tmp, a) == LESS_THAN; shift_op(get_bitstring(tmp), 1,'0'))
 		{
 			sub_with = tmp;
 		}

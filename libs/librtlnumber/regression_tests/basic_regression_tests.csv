@@ -4,26 +4,25 @@
 #  for the Reconfigurable Computing Research Lab at the
 #  Univerity of New Brunswick in Fredericton, New Brunswick, Canada
 #####################
-# Unary operations
 
-# bitwise 
-Bitwise-Not,			~,  4'b1010,	4'b0101
-Bitwise-minus,			-,  4'b1010,	4'b0110
-Bitwise-plus,			+,  4'b1010,	4'sb0101
-Bitwise-inc_up,			++,	4'b1010,	4'b1011
-Bitwise-inc_down,		--,	4'b1010,	4'b1001
-Bitwise-and,			&,  4'b1010,	1'b0
-Bitwise-or,				|,  4'b1010,	1'b1
-Bitwise-xor,			^,  4'b1010,	1'b0
-Bitwise-nand,			~&,	4'b1010,	1'b1
-Bitwise-nor,			~|,	4'b1010,	1'b1
-Bitwise-xnor,			~^,	4'b1010,	1'b1
-Bitwise-Logical-Not,	!,  4'b1010,	1'b0
+# Sign modifier
+Sign_minus,		        -,  4'b1010,	4'b0110
+Sign_plus,			    +,  4'b1010,	4'b1010
 
-#####################
-# Binary operations
+# Increment
+Increment,		        ++,	4'b1010,	4'b1011
+Decrement,		        --,	4'b1010,	4'b1001
+
+# Reduction
+Reduction-and,			&,  4'b1010,	1'b0
+Reduction-or,			|,  4'b1010,	1'b1
+Reduction-xor,			^,  4'b1010,	1'b0
+Reduction-nand,			~&,	4'b1010,	1'b1
+Reduction-nor,			~|,	4'b1010,	1'b0
+Reduction-xnor,			~^,	4'b1010,	1'b1
 
 # bitwise
+Bitwise-Not,	            ~,  4'b1010,	4'b0101
 Bitwise-And,	4'b1010,	&,  4'b1000,	4'b1000
 Bitwise-Or,		4'b1010,	|,  4'b1000,	4'b1010
 Bitwise-Nor,	4'b1010,	~|, 4'b1000,	4'b0101
@@ -38,6 +37,7 @@ Case-ne,		4'b1x10,	!==,  4'b1x10,	1'b0
 Case-eq,		4'b1x11,	===,  4'b1x10,	1'b0
 
 # logical operation
+Logical-Not,	                    !,  4'b1010,	1'b0
 Logical-And,			4'b1010,	&&, 4'b1000,	1'b1
 Logical-Or,				4'b1010,	||, 4'b1000,	1'b1
 Logical-Or,				4'b0000,	||, 4'b1000,	1'b1
@@ -63,6 +63,5 @@ Basic-Multiplication,	2,  *,  2,  3'sb0100
 #Basic-Division,			10, %,  2,  1'sb0
 Basic-Multiplication,   2,  **,  0,  1'sb1
 
-#####################
 # Ternary operations
 if-else_switch,			1,  ?,  10,  :, 0, 10
