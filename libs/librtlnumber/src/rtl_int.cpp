@@ -388,6 +388,17 @@ inline static char _v_binary_op(const char a, const char b, const char lut[4][4]
 			;
 }
 
+#define v_three_op(a,b,c,op)	_v_three_op(a, b, c, op, __func__, __LINE__)
+inline static char _v_three_op(const char a, const char b, const char c, const char lut[4][4][4], const char *FUNCT, int LINE) 
+{
+	return 	((a) == '0')				? 	_v_binary_op(b,c, lut[REF_0], FUNCT, LINE)	:
+			((a) == '1')				? 	_v_binary_op(b,c, lut[REF_1], FUNCT, LINE) :
+			(std::tolower(a) == 'x')	?	_v_binary_op(b,c, lut[REF_x], FUNCT, LINE)	: 
+			(std::tolower(a) == 'z')	?	_v_binary_op(b,c, lut[REF_z], FUNCT, LINE) :
+											_bad_value(a, FUNCT, LINE)
+			;
+}
+
 static const char l_buf[4] = {
 	/*	 0   1   x   z  <- a*/
 		'0','1','x','x'
@@ -511,6 +522,23 @@ static const char l_ternary[4][4] = {
 	/* z */	{'x','x','x','x'}
 };
 
+static const char l_sum[4][4][4] = {
+	/*	carry		{0}					{1}				  {x}				 {z}
+	/* a /	  0   1   x   z 	  0   1   x   z		 0   1   x   z		0   1   x   z <- b */	
+	/* 0 */	{{'0','1','x','x'},	{'1','0','x','x'}, {'x','x','x','x'}, {'x','x','x','x'}},
+	/* 1 */	{{'1','0','x','x'},	{'0','1','x','x'}, {'x','x','x','x'}, {'x','x','x','x'}},
+	/* x */	{{'x','x','x','x'},	{'x','x','x','x'}, {'x','x','x','x'}, {'x','x','x','x'}},
+	/* z */	{{'x','x','x','x'},	{'x','x','x','x'}, {'x','x','x','x'}, {'x','x','x','x'}}
+};
+static const char l_carry[4][4][4] = {
+	/*	carry		{0}					{1}				  {x}				 {z}
+	/* a /	  0   1   x   z 	  0   1   x   z		 0   1   x   z		0   1   x   z <- b */	
+	/* 0 */	{{'0','0','0','0'},	{'0','1','x','x'}, {'0','x','x','x'}, {'0','x','x','x'}},
+	/* 1 */	{{'0','1','x','x'},	{'1','1','1','1'}, {'x','1','x','x'}, {'x','1','x','x'}},
+	/* x */	{{'0','x','x','x'},	{'x','1','x','x'}, {'x','x','x','x'}, {'x','x','x','x'}},
+	/* z */	{{'0','x','x','x'},	{'x','1','x','x'}, {'x','x','x','x'}, {'x','x','x','x'}}
+};
+
 /***
  * these are extended defines to simplify our lives
  */
@@ -530,10 +558,10 @@ static const char l_ternary[4][4] = {
 #define v_pmos(in,control)		v_binary_op(in,control, 	l_pmos)
 #define v_rnmos(in, control)	v_binary_op(in,control, 	l_rnmos)
 #define v_nmos(in,control)		v_binary_op(in,control, 	l_nmos)
-#define v_ternary(in,control)	v_binary_op(in,control,	l_ternary)
+#define v_ternary(in,control)	v_binary_op(in,control,		l_ternary)
 
-#define add_func(a, b, carry)	v_xor(v_xor(a,b),carry)
-#define carry_func(a, b, carry)	v_or(v_and(a,b),v_and(v_xor(a,b),carry))
+#define v_sum(a, b, carry)		v_three_op(a,b,carry,		l_sum)
+#define v_carry(a, b, carry)	v_three_op(a,b,carry,		l_carry)
 
 
 //TODO: signed numbers!
@@ -595,7 +623,6 @@ inline static RTL_INT V_INCREMENT(RTL_INT a, const char lut_adder[4][4], const c
 {
 	std::string result = "";
 	char tmp_carry  = '0';
-	std::size_t std_length = get_len(a);
 	
 	auto bit_a = get_bitstring(a).crbegin();
     for (; bit_a != get_bitstring(a).crend(); ++bit_a) {
@@ -884,8 +911,8 @@ RTL_INT V_ADD(RTL_INT a,RTL_INT b)
 	auto bit_b = get_bitstring(b).crbegin();
 	for (; bit_a != get_bitstring(a).crend() && bit_b != get_bitstring(b).crend(); ++bit_a, ++bit_b)
 	{
-		PUSH_MSB(result,add_func(*bit_a, *bit_b, previous_carry));
-		PUSH_MSB(result,carry_func(*bit_a, *bit_b, previous_carry));
+		PUSH_MSB(result,v_sum(*bit_a, *bit_b, previous_carry));
+		previous_carry = v_carry(*bit_a, *bit_b, previous_carry);
 	}
 	PUSH_MSB(result,previous_carry);
 
