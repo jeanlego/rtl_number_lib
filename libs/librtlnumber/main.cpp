@@ -1,98 +1,112 @@
-#include <stdio.h>
 #include <iostream>
+#include <vector>
 #include <string>
-#include <cstring>
 
 #include "rtl_int.h"
 
-#define UPPER_LIMIT 20
+#define bad_ops(test) _bad_ops(test, __func__, __LINE__)
+inline static RTL_INT _bad_ops(std::string test, const char *FUNCT, int LINE)	
+{	
+	std::cout << "INVALID INPUT OPS: (" << test << ")@" << FUNCT << "::" << std::to_string(LINE) << std::endl;		
+	return standardize_input("1'bx"); 
+}
+
+
+/***
+ *     __   __       ___  __   __           ___       __       
+ *    /  ` /  \ |\ |  |  |__) /  \ |       |__  |    /  \ |  | 
+ *    \__, \__/ | \|  |  |  \ \__/ |___    |    |___ \__/ |/\| 
+ *                                                             
+ * 	This is used for testing purposes only, unused in ODIN as the input is already preprocessed
+ */
+
+std::string arithmetic(std::string op, std::string a_in);
+std::string arithmetic(std::string a_in, std::string op, std::string b_in);
+std::string arithmetic(std::string a_in, std::string op1 ,std::string b_in, std::string op2, std::string c_in);
+
+std::string arithmetic(std::string op, std::string a_in)
+{
+	std::vector<std::string> a = standardize_input(a_in);
+
+	/* return Process Operator via ternary */
+	return	v_bin_string(	(op == "~")		?		V_NEG(a):
+							(op == "-")		?		V_MINUS(a):
+							(op == "+")		?		V_ADD(a):
+							(op == "++")	?		V_PLUS_PLUS(a):
+							(op == "--")	?		V_MINUS_MINUS(a):
+							(op == "&")		?		V_REDUCTION_AND(a):
+							(op == "|")		?		V_REDUCTION_OR(a):
+							(op == "^")		?		V_REDUCTION_XOR(a):
+							(op == "~&")	?		V_REDUCTION_NAND(a):
+							(op == "~|")	?		V_REDUCTION_NOR(a):
+							(op == "~^"	
+							|| op == "~^")	?		V_REDUCTION_XNOR(a):
+							(op == "!")		?		V_LOGICAL_NOT(a):
+													bad_ops(op));
+
+}
+
+std::string arithmetic(std::string a_in, std::string op, std::string b_in)
+{
+	std::vector<std::string> a = standardize_input(a_in);
+	std::vector<std::string> b = standardize_input(b_in);
+	
+	/* return Process Operator via ternary */
+	return	v_bin_string(	/*	Reduction Ops	*/
+							(op == "&")		?		V_REDUCTION_AND(a,b):
+							(op == "|")		?		V_REDUCTION_OR(a,b):
+							(op == "^")		?		V_REDUCTION_XOR(a,b):
+							(op == "~&")	?		V_REDUCTION_NAND(a,b):
+							(op == "~|")	?		V_REDUCTION_NOR(a,b):
+							(op == "~^"	
+							|| op == "~^")	?		V_REDUCTION_XNOR(a,b):
+							/*	Case test	*/
+							(op == "===" )	?		V_CASE_EQUAL(a,b):
+							(op == "!==")	?		V_CASE_NOT_EQUAL(a,b):
+							/*	Shift Operator	*/
+							(op == "<<")	?		V_SHIFT_LEFT(a,b):
+							(op == "<<<")	?		V_SIGNED_SHIFT_LEFT(a,b):
+							(op == ">>")	?		V_SHIFT_RIGHT(a,b):
+							(op == ">>>")	?		V_SIGNED_SHIFT_LEFT(a,b):
+							/* Logical Operators */
+							(op == "&&")	?		V_LOGICAL_AND(a,b):
+							(op == "||")	?		V_LOGICAL_OR(a,b):
+							(op == "<")		?		V_LT(a,b):																																													
+							(op == ">")		?		V_GT(a,b):
+							(op == "<=")	?		V_LE(a,b):
+							(op == ">=")	?		V_GE(a,b):
+							(op == "==")	?		V_EQUAL(a,b):
+							(op == "!=")	?		V_NOT_EQUAL(a,b):
+							/* arithmetic Operators */																
+							(op == "+")		?		V_ADD(a,b):
+							(op == "-")		?		V_MINUS(a,b):
+							(op == "*")		?		V_MULTIPLY(a,b):
+							(op == "**")	?		V_POWER(a,b):
+							/* cannot div by 0 */
+							(op == "/")		?		V_DIV(a,b):
+							(op == "%")		?		V_MOD(a,b):																																																																																																																																																																																																															
+													bad_ops(op));
+}
+
+std::string arithmetic(std::string a_in, std::string op1 ,std::string b_in, std::string op2, std::string c_in)
+{
+	std::vector<std::string> a = standardize_input(a_in);
+	std::vector<std::string> b = standardize_input(b_in);
+	std::vector<std::string> c = standardize_input(c_in);
+	
+	 /* return Process Operator via ternary */
+	return	v_bin_string(	(op1 != "?")	?	bad_ops(op1):
+							(op2 != ":")	?	bad_ops(op2):
+												V_TERNARY(a,b,c));
+}
 
 int main(int argc, char** argv) 
 { 
-	if(1 < argc)
-	{
-		// std::cout << "Non-Interactive Mode:" << std::endl;
 
-		// std::cout << "You have entered " << argc << " arguments:" << "\n";
-		// for (int i = 0; i < argc; ++i)
-		// {
-		// 	std::cout << "argv[" << i << "]: " << argv[i] << "\n";
-		// }
-
-		if((4 == argc) && (0 == strcmp("1", argv[1])))
-		{
-			std::cout << "arithmetic(\"" << argv[2] << "\", \"" << argv[3] << "\")" << std::endl;
-
-			std::string result = arithmetic(argv[2], argv[3]);
-
-			std::cout << result << std::endl;
-		}
-		else if ((5 == argc) && (0 == strcmp("2", argv[1])))
-		{
-			std::cout << "arithmetic(\"" << argv[2] << "\", \"" << argv[3]<< "\", \"" << argv[4] << "\")" << std::endl;
-
-			std::string result = arithmetic(argv[2], argv[3], argv[4]);
-
-			std::cout << result << std::endl;
-		}
-		else if ((6 == argc) && (0 == strcmp("3", argv[1])))
-		{
-			std::cout << "arithmetic(\"" << argv[2] << "\", \"" << argv[3]<< "\", \"" << argv[4]<< "\", \"" << argv[5]<< "\", \"" << argv[6] << "\")" << std::endl;
-
-			std::string result = arithmetic(argv[2], argv[3], argv[4], argv[5], argv[6]);
-
-			std::cout << result << std::endl;
-		}
-		else
-		{
-			std::cout << "ERROR: Too Many Arguments: " << (argc - 1) << "!" << std::endl;
-		}
-
-		// std::cout << "Exiting..." << std::endl;
-	}
-	else
-	{
-		std::cout << "\nInteractive Mode:" << std::endl;
-		//read input file space separated operation 1 / line
-		for(std::size_t i = 0; i < UPPER_LIMIT; i++)
-		{
-			char typ[512];
-			std::cout << "insert operation number of operand [1,2,3] (Q/q to quit): ";
-			scanf("%s", typ);
-			std::string comp = typ; 
-
-			if (comp == "1")
-			{
-				char numb[2][512];
-				scanf("%s %s", numb[0], numb[1]);
-				std::string result = arithmetic(numb[0], numb[1]);
-				std::cout << "Result is: " << result << std::endl;
-			}
-			else if (comp == "2")
-			{
-				char numb[3][512];
-				scanf("%s %s %s", numb[0], numb[1], numb[2]);
-				std::string result = arithmetic(numb[0], numb[1], numb[2]);
-				std::cout << "Result is: " << result << std::endl;
-			}
-			else if (comp == "3")
-			{
-				char numb[5][512];
-				scanf("%s %s %s %s %s", numb[0], numb[1], numb[2], numb[3], numb[4]);
-				std::string result = arithmetic(numb[0], numb[1], numb[2], numb[3], numb[4]);
-				std::cout << "Result is: " << result << std::endl;
-			}
-			else if (comp == "Q" || comp == "q")
-			{
-				i = (UPPER_LIMIT + 1);
-				std::cout << "Exiting..." << std::endl;
-			}
-			else
-			{
-				std::cout << "ERROR wrong type" << std::endl;
-			}
-		}
-	}
+	if		(argc == 3)	std::cout << arithmetic(argv[1], argv[2]) << std::endl;
+	else if	(argc == 4)	std::cout << arithmetic(argv[1], argv[2], argv[3]) << std::endl;
+	else if (argc == 6)	std::cout << arithmetic(argv[1], argv[2], argv[3], argv[4], argv[5]) << std::endl;
+	else				std::cout << "ERROR: Too Many Arguments: " << std::to_string(argc - 1) << "!" << std::endl;
 
 	return 0;
 }
