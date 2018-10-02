@@ -69,13 +69,23 @@ for INPUT in ${0%/*}/regression_tests/*.csv; do
 		# Parse out any ERRORS from OUTPUT_AND_RESULT
 		#  and handle accordingly
 		if 	[ "_$OUTPUT_AND_RESULT" != "_" ] &&
-			[ "_" == "_$(echo "$OUTPUT_AND_RESULT" | grep -v $EXPECTED_RESULT)" ] &&
-			[ "_$EXPECTED_RESULT" == "_$(echo "$OUTPUT_AND_RESULT" | grep $EXPECTED_RESULT)"  ]; then
-				echo "--- PASSED == $TEST_LABEL"
+			[ "_" == "_$(echo $OUTPUT_AND_RESULT | grep ERROR)" ]; then
+
+				test_output_args="${OUTPUT_AND_RESULT} === ${EXPECTED_RESULT}"
+				TEST_OUTPUT=$(${0%/*}/rtl_number ${test_output_args})
+
+				if 	[ "_$TEST_OUTPUT" != "_" ] &&
+				[ "1'b1" == "$TEST_OUTPUT" ]; then
+					echo "--- PASSED == $TEST_LABEL"
+				else
+					FAILURE_COUNT=$((FAILURE_COUNT+1))
+					echo -e "-X- FAILED == $TEST_LABEL\t  ./rtl_number ${RTL_CMD_IN}\t CMP=${TEST_OUTPUT} Output:<$OUTPUT_AND_RESULT> != <$EXPECTED_RESULT>"
+				fi
 		else
 			FAILURE_COUNT=$((FAILURE_COUNT+1))
-			echo -e "-X- FAILED == $TEST_LABEL\t  ./rtl_number ${RTL_CMD_IN}\t Output:<$OUTPUT_AND_RESULT> != <$EXPECTED_RESULT>"
+			echo -e "-X- FAILED == $TEST_LABEL\t  ./rtl_number ${RTL_CMD_IN}\t  Output:<$OUTPUT_AND_RESULT> != <$EXPECTED_RESULT>"
 		fi
+
 		#unset the multiplication token override
 		unset -f
 

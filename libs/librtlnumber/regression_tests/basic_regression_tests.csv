@@ -56,12 +56,12 @@ Signed-shift-left,		5'b00100,	<<<,	2'b10,	5'b10000
 Signed-shift-right,		5'b10100,	>>>,	2'b10,	5'b11101
 
 # arithmetic
-Basic-Addition,			1,  +,  1,  2'sb10
-Basic-Subtraction,		4,  -,  2,  2'sb10
-#Basic-Division,			10, /,  2,  3'sb0101
-Basic-Multiplication,	2,  *,  2,  3'sb0100
-#Basic-Division,			10, %,  2,  1'sb0
-Basic-Multiplication,   2,  **,  0,  1'sb1
+Addition,			4'b0110,    +,  4'b0011,  4'b1001
+Subtraction,		4'b0100,    -,  4'b0010,  4'b0010
+#Division,			4'b1010,    /,  4'b0010,  4'b0010
+Multiplication,	    4'b0010,    *,  4'b0010,  8'b00000100
+#Modulo,			    4'b1011,    %,  4'b0010,  4'b0001
+Power,              4'b0010,    **, 4'b0000,  'b1               #fix me!!! whats the correct bit length??
 
 # Ternary operations
-if-else_switch,			1,  ?,  10,  :, 0, 10
+Ternary,			1'b1,   ?,  2'b01,  :,  2'b10,  2'b01
