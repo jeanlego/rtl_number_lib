@@ -1,14 +1,22 @@
-#include "rtl_int.h"
 #include <cstdarg>
-#include "stdio.h"
+#include <stdio.h>
 #include <algorithm>
 #include <string>
 #include <vector>
 #include <cctype>
 #include <iostream>
 
+#include "rtl_int.h"
+
+/* Authors: Aaron Graham (aaron.graham@unb.ca, aarongraham9@gmail.com),
+ *           Jean-Philippe Legault (jlegault@unb.ca, jeanphilippe.legault@gmail.com) and
+ *           Dr. Kenneth B. Kent (ken@unb.ca)
+ *           for the Reconfigurable Computing Research Lab at the
+ *           Univerity of New Brunswick in Fredericton, New Brunswick, Canada
+ */
+
 // this sets the default bit width
-#define DEFAULT_BIT_WIDTH 64
+#define DEFAULT_BIT_WIDTH 32
 #define BRK brk_pt();
 static void brk_pt(){
 	return;
@@ -20,9 +28,9 @@ static void brk_pt(){
  *    |___ |  \ |  \ \__/ |  \    |  \ |___ |    \__/ |  \  |  | | \| \__> 
  *                                                                         
  */
-static std::vector<std::string> return_internal_representation(bool sign, std::size_t length, std::string bitstring)
+inline static RTL_INT return_internal_representation(bool sign, std::size_t length, std::string bitstring)
 {
-	std::vector<std::string> to_return;
+	RTL_INT to_return;
 	to_return.push_back((sign)?"1":"0");
 	to_return.push_back(std::to_string(length));
 	to_return.push_back(bitstring);
@@ -30,17 +38,10 @@ static std::vector<std::string> return_internal_representation(bool sign, std::s
 }
 
 #define bad_value(test) _bad_value(static_cast<char>(std::tolower(test)), __func__, __LINE__); std::abort()
-static char _bad_value(char test, const char *FUNCT, int LINE)	
+inline static char _bad_value(char test, const char *FUNCT, int LINE)	
 {	
 	std::cout << "INVALID BIT INPUT: (" << std::string(1,test) << ")@" << FUNCT << "::" << std::to_string(LINE) << std::endl;	
 	return 'x'; 
-}
-
-#define bad_ops(test) _bad_ops(test, __func__, __LINE__)
-static std::vector<std::string> _bad_ops(std::string test, const char *FUNCT, int LINE)	
-{	
-	std::cout << "INVALID INPUT OPS: (" << test << ")@" << FUNCT << "::" << std::to_string(LINE) << std::endl;		
-	return return_internal_representation(false,0,"xxxxxxxxxxxxxxx"); 
 }
 
 /***
@@ -64,7 +65,7 @@ static std::vector<std::string> _bad_ops(std::string test, const char *FUNCT, in
 #define is_dont_care_string(input) (input.find("xXzZ") != std::string::npos)
 
 #define assert_string_of_radix(input, radix) _assert_string_of_radix(input, radix, __func__,__LINE__)
-static void _assert_string_of_radix(std::string input, std::size_t radix, const char *FUNCT, int LINE)
+inline static void _assert_string_of_radix(std::string input, std::size_t radix, const char *FUNCT, int LINE)
 {
 	BRK
 	bool pass = false;
@@ -84,10 +85,9 @@ static void _assert_string_of_radix(std::string input, std::size_t radix, const 
 }
 
 #define v_strtoul(num,radix) _v_strtoul(num,radix,__func__, __LINE__)
-static std::size_t _v_strtoul(std::string orig_number, std::size_t radix, const char *FUNCT, int LINE)
+inline static std::size_t _v_strtoul(std::string orig_number, std::size_t radix, const char *FUNCT, int LINE)
 {
 	BRK
-	std::size_t result = 0;
 	assert_string_of_radix(orig_number, radix);
 	if (is_dont_care_string(orig_number))
 	{
@@ -100,20 +100,11 @@ static std::size_t _v_strtoul(std::string orig_number, std::size_t radix, const 
 		std::abort();
 	}
 	
-	return std::strtoul(orig_number.c_str(),NULL,radix);
-
-	// for(std::size_t i=MSB; i < orig_number.length(); i++) {
-	// 	std::size_t bit = static_cast<std::size_t>(orig_number[i]);
-	// 	if(bit >= '0' && bit <= '9' )		result = (result * radix) +(bit - static_cast<std::size_t>('0'));
-	// 	else if(bit >= 'a' && bit <= 'f')	result = (result * radix) +(bit - static_cast<std::size_t>('a') + 10);
-	// 	else if(bit >= 'A' && bit <= 'F')	result = (result * radix) +(bit - static_cast<std::size_t>('A') + 10);
-	// }
-
-	// return result;
+	return std::strtoul(orig_number.c_str(),NULL,static_cast<int>(radix));
 }
 
 #define get_len(internal_bit_struct) _get_len(internal_bit_struct, __func__, __LINE__)
-static std::size_t _get_len(std::vector<std::string> internal_bit_struct, const char *FUNCT, int LINE)
+inline static std::size_t _get_len(RTL_INT internal_bit_struct, const char *FUNCT, int LINE)
 {
 	BRK
 	std::size_t defined_size = _v_strtoul(internal_bit_struct[1],10, FUNCT, LINE);
@@ -126,7 +117,7 @@ static std::size_t _get_len(std::vector<std::string> internal_bit_struct, const 
 }
 
 #define get_bit(int_bits, location) _get_bit(int_bits, location, __func__, __LINE__)
-static char _get_bit(std::vector<std::string> internal_bit_struct, std::size_t location, const char *FUNCT, int LINE)
+inline static char _get_bit(RTL_INT internal_bit_struct, std::size_t location, const char *FUNCT, int LINE)
 {
 	BRK
 	if(location >= get_len(internal_bit_struct))
@@ -138,13 +129,13 @@ static char _get_bit(std::vector<std::string> internal_bit_struct, std::size_t l
 }
 
 #define is_signed(bits)	(bits[0] == "0")? 0 : 1
-static std::vector<std::string> set_sign(std::vector<std::string> internal_binaries, bool new_sign)
+inline static RTL_INT set_sign(RTL_INT internal_binaries, bool new_sign)
 {
 	BRK
 	return return_internal_representation(new_sign && is_signed(internal_binaries), v_strtoul(internal_binaries[1],10), internal_binaries[2]);
 }
 
-static std::vector<std::string> resize(std::vector<std::string> internal_bit_struct, std::size_t len)
+inline static RTL_INT resize(RTL_INT internal_bit_struct, std::size_t len)
 {
 	BRK
 	//expand to length
@@ -162,13 +153,16 @@ static std::vector<std::string> resize(std::vector<std::string> internal_bit_str
 }
 
 //resize bitstring to its own length
-static std::vector<std::string> readjust_size(std::vector<std::string> internal_bit_struct)
+inline static RTL_INT readjust_size(RTL_INT internal_bit_struct)
 {
 	BRK
 	return resize(internal_bit_struct, get_len(internal_bit_struct));
 }
 
-static std::string to_bitstring(std::string orig_string, std::size_t radix)
+/**********************
+ * convert from and to internal representation bitstring
+ */
+inline static std::string to_bitstring(std::string orig_string, std::size_t radix)
 {
 	BRK
 	std::string result = "";	
@@ -286,16 +280,12 @@ static std::string to_bitstring(std::string orig_string, std::size_t radix)
 	return result;
 }
 
-//resize bitstring to length
-
-
-static std::vector<std::string> standardize_input(std::string input_number)
+RTL_INT standardize_input(std::string input_number)
 {	
 	BRK
 	//remove underscores
-	std::cout << "pre-processing input: " << input_number << std::endl;
 	input_number.erase(std::remove(input_number.begin(), input_number.end(), '_'), input_number.end());
-	std::vector<std::string> to_return = V_BAD;
+	RTL_INT to_return = V_BAD;
 
 	std::size_t loc = input_number.find("\'");
 	if(loc == std::string::npos)
@@ -322,8 +312,7 @@ static std::vector<std::string> standardize_input(std::string input_number)
 	{
 		to_return = set_sign(to_return,false);
 	}
-
-
+	
 	switch(std::tolower(input_number[loc+1]))
 	{
 		case 'b':	to_return[2] = to_bitstring(input_number.substr(loc+2), 2); break;
@@ -341,7 +330,7 @@ static std::vector<std::string> standardize_input(std::string input_number)
 }
 
 // convert internal format to verilog
-static std::string v_bin_string(std::vector<std::string> internal_binary_number)
+std::string v_bin_string(RTL_INT internal_binary_number)
 {
 	BRK
 	//final resize
@@ -378,7 +367,7 @@ static std::string v_bin_string(std::vector<std::string> internal_binary_number)
 #define REF_z 3
 
 #define v_unary_op(a,op) _v_unary_op(a, op, __func__, __LINE__)
-static char _v_unary_op(const char a, const char lut[4], const char *FUNCT, int LINE) 
+inline static char _v_unary_op(const char a, const char lut[4], const char *FUNCT, int LINE) 
 {
 	return 	((a) == '0')				?	lut[REF_0] :
 			((a) == '1')				?	lut[REF_1] :
@@ -389,7 +378,7 @@ static char _v_unary_op(const char a, const char lut[4], const char *FUNCT, int 
 }
 
 #define v_binary_op(a,b,op)	_v_binary_op(a, b, op, __func__, __LINE__)
-static char _v_binary_op(const char a, const char b, const char lut[4][4], const char *FUNCT, int LINE) 
+inline static char _v_binary_op(const char a, const char b, const char lut[4][4], const char *FUNCT, int LINE) 
 {
 	return 	((a) == '0')				? 	_v_unary_op(b, lut[REF_0], FUNCT, LINE)	:
 			((a) == '1')				? 	_v_unary_op(b, lut[REF_1], FUNCT, LINE) :
@@ -546,58 +535,74 @@ static const char l_ternary[4][4] = {
 #define add_func(a, b, carry)	v_xor(v_xor(a,b),carry)
 #define carry_func(a, b, carry)	v_or(v_and(a,b),v_and(v_xor(a,b),carry))
 
-static int internal_quick_eval(std::vector<std::string> a,std::vector<std::string> b)
-{
-	// -1 less, 0 equal, 1 greater
-	short condition_code = -1; 
 
-	std::size_t std_length = size_max(get_len(a), get_len(b));
+//TODO: signed numbers!
+
+EVAL_RESULT return_int_eval(RTL_INT a,RTL_INT b)
+{
+	std::size_t std_length = std::max(get_len(a),get_len(b));
 	a = resize(a, std_length);
 	b = resize(b, std_length);
 
-	for(std::size_t i=std_length-1;  i < std_length && condition_code == 0; i--)
+	auto bit_a = get_bitstring(a).begin();
+	auto bit_b = get_bitstring(b).begin();
+	for (; bit_a != get_bitstring(a).end() && bit_b != get_bitstring(b).end(); ++bit_a, ++bit_b)
 	{
-		condition_code = 	(get_bit(a, i) == get_bit(b, i))	?	0	:
-							(get_bit(a, i) == '0')				?	-1	:
-																	1	;
+		if		(*bit_a == '1' && *bit_b == '0')	return GREATHER_THAN;
+		else if	(*bit_a == '0' && *bit_b == '1')	return LESS_THAN;
+		else if	(*bit_a == 'x' || *bit_b == 'x')	return UNKNOWN;
 	}
-	return condition_code;
+	return EQUAL;
+}
+EVAL_RESULT return_int_eval(long a,RTL_INT b)
+{
+	return return_int_eval(standardize_input(std::to_string(a)),b);
+}
+EVAL_RESULT return_int_eval(RTL_INT a,long b)
+{
+	return return_int_eval(a,standardize_input(std::to_string(b)));
 }
 
-static std::vector<std::string> V_REDUX(std::vector<std::string> a, const char lut[4][4])
+
+//TODO: is it LSB -> MSB or MSB -> LSB
+inline static RTL_INT V_REDUX(RTL_INT a, const char lut[4][4])
 {
 	std::size_t end = get_len(a)-1;
 	char result = get_bit(a, end);
-	for(std::size_t i=end-1;  i < end; i--)
-		result = v_binary_op(get_bit(a, i), result, lut);
+	auto bit_a = get_bitstring(a).crbegin();
+    for (; bit_a != get_bitstring(a).crend(); ++bit_a)
+		result = v_binary_op(*bit_a, result, lut);
 
 	return return_internal_representation(false, 1, std::string(1,result));
 }
 
-static std::vector<std::string> V_REDUX(std::vector<std::string> a, std::vector<std::string> b, const char lut[4][4])
+inline static RTL_INT V_REDUX(RTL_INT a, RTL_INT b, const char lut[4][4])
 {
 	std::string result = "";
 	std::size_t std_length = size_max(get_len(a), get_len(b));
 	a = resize(a, std_length);
 	b = resize(b, std_length);
 
-	for(std::size_t i=std_length-1;  i < std_length; i--)
-		PUSH_MSB(result, v_binary_op(get_bit(a, i), get_bit(b, i),lut));
+	auto bit_a = get_bitstring(a).crbegin();
+	auto bit_b = get_bitstring(b).crbegin();
+	for (; bit_a != get_bitstring(a).crend() && bit_b != get_bitstring(b).crend(); ++bit_a, ++bit_b)
+		PUSH_MSB(result, v_binary_op(*bit_a, *bit_b,lut));
 
 	return return_internal_representation(false, std_length, result);
 }
 
-static std::vector<std::string> V_INCREMENT(std::vector<std::string> a, const char lut_adder[4][4], const char lut_carry[4][4])
+inline static RTL_INT V_INCREMENT(RTL_INT a, const char lut_adder[4][4], const char lut_carry[4][4])
 {
 	std::string result = "";
 	char tmp_carry  = '0';
 	std::size_t std_length = get_len(a);
-	for(std::size_t i=std_length-1; i < std_length; i--)
-	{
-		PUSH_MSB(result, v_binary_op(get_bit(a, i), tmp_carry, lut_adder));
-		tmp_carry = v_binary_op(get_bit(a, i), tmp_carry, lut_carry);
+	
+	auto bit_a = get_bitstring(a).crbegin();
+    for (; bit_a != get_bitstring(a).crend(); ++bit_a) {
+		PUSH_MSB(result, v_binary_op(*bit_a,tmp_carry, lut_adder));
+		tmp_carry = v_binary_op(*bit_a, tmp_carry, lut_carry);
 	}
-	return return_internal_representation(is_signed(a), get_len(a), result);
+	return return_internal_representation(is_signed(a), result.size(), result);
 }
 
 /***
@@ -607,67 +612,67 @@ static std::vector<std::string> V_INCREMENT(std::vector<std::string> a, const ch
  *                                                                        
  */
 
-static std::vector<std::string> V_NEG(std::vector<std::string> a)
+RTL_INT V_NEG(RTL_INT a)
 {
 	std::string result = "";
-	std::size_t std_length = get_len(a);
-	for(std::size_t i=std_length-1;  i < std_length; i--)
-		PUSH_MSB(result, v_not(get_bit(a, i)));
+	auto bit_a = get_bitstring(a).crbegin();
+    for (; bit_a != get_bitstring(a).crend(); ++bit_a)
+		PUSH_MSB(result, v_not(*bit_a));
 	
-	return return_internal_representation(false, 1, result);
+	return return_internal_representation(false, result.length(), result);
 }
 
-static std::vector<std::string> V_PLUS_PLUS(std::vector<std::string> a)
+RTL_INT V_PLUS_PLUS(RTL_INT a)
 {
 	return V_INCREMENT(a, l_xor, l_and);
 }
 
-static std::vector<std::string>  V_MINUS_MINUS(std::vector<std::string> a)
+RTL_INT  V_MINUS_MINUS(RTL_INT a)
 {
 	return V_INCREMENT(a, l_xnor, l_or);
 }
 
-static std::vector<std::string> V_ADD(std::vector<std::string> a)
+RTL_INT V_ADD(RTL_INT a)
 {
 	return a;
 }
 
-static std::vector<std::string> V_MINUS(std::vector<std::string> a)
+RTL_INT V_MINUS(RTL_INT a)
 {
 	return V_PLUS_PLUS(V_NEG(a));
 }
 
-static std::vector<std::string> V_REDUCTION_AND(std::vector<std::string> a)
+RTL_INT V_REDUCTION_AND(RTL_INT a)
 {
 	return V_REDUX(a, l_and);
 }
 
-static std::vector<std::string> V_REDUCTION_OR(std::vector<std::string> a)
+RTL_INT V_REDUCTION_OR(RTL_INT a)
 {
 	return V_REDUX(a, l_or);	
 }
 
-static std::vector<std::string> V_REDUCTION_XOR(std::vector<std::string> a)
+RTL_INT V_REDUCTION_XOR(RTL_INT a)
 {
 	return V_REDUX(a, l_xor);
 }
 
-static std::vector<std::string> V_REDUCTION_NAND(std::vector<std::string> a)
+RTL_INT V_REDUCTION_NAND(RTL_INT a)
 {
 	return V_REDUX(a, l_nand);
 }
 
-static std::vector<std::string> V_REDUCTION_NOR(std::vector<std::string> a)
+RTL_INT V_REDUCTION_NOR(RTL_INT a)
 {
 	return V_REDUX(a, l_nor);
 }
 
-static std::vector<std::string> V_REDUCTION_XNOR(std::vector<std::string> a)
+RTL_INT V_REDUCTION_XNOR(RTL_INT a)
 {
 	return V_REDUX(a, l_xnor);
 }
 
-static std::vector<std::string> V_LOGICAL_NOT(std::vector<std::string> a)
+RTL_INT V_LOGICAL_NOT(RTL_INT a)
 {
 	return V_REDUCTION_NOR(a);
 }
@@ -679,148 +684,249 @@ static std::vector<std::string> V_LOGICAL_NOT(std::vector<std::string> a)
  *                                                                          
  */
 
-static std::vector<std::string> V_REDUCTION_AND(std::vector<std::string> a,std::vector<std::string> b)
+RTL_INT V_REDUCTION_AND(RTL_INT a,RTL_INT b)
 {
 	return V_REDUX(a,b,l_and);
 }
 
-static std::vector<std::string> V_REDUCTION_OR(std::vector<std::string> a,std::vector<std::string> b)
+RTL_INT V_REDUCTION_OR(RTL_INT a,RTL_INT b)
 {
 	return V_REDUX(a,b,l_or);
 }
 
-static std::vector<std::string> V_REDUCTION_XOR(std::vector<std::string> a,std::vector<std::string> b)
+RTL_INT V_REDUCTION_XOR(RTL_INT a,RTL_INT b)
 {
 	return V_REDUX(a,b,l_xor);
 }
 
-static std::vector<std::string> V_REDUCTION_NAND(std::vector<std::string> a,std::vector<std::string> b)
+RTL_INT V_REDUCTION_NAND(RTL_INT a,RTL_INT b)
 {
 	return V_REDUX(a,b,l_nand);
 }
 
-static std::vector<std::string> V_REDUCTION_NOR(std::vector<std::string> a,std::vector<std::string> b)
+RTL_INT V_REDUCTION_NOR(RTL_INT a,RTL_INT b)
 {
 	return V_REDUX(a,b,l_nor);
 }
 
-static std::vector<std::string> V_REDUCTION_XNOR(std::vector<std::string> a,std::vector<std::string> b)
+RTL_INT V_REDUCTION_XNOR(RTL_INT a,RTL_INT b)
 {
 	return V_REDUX(a,b,l_xnor);
 }
 
-static std::vector<std::string> V_CASE_EQUAL(std::vector<std::string> a,std::vector<std::string> b)
+// TODO: fix me!!! this is bit by bit comparison!!!
+RTL_INT V_CASE_EQUAL(RTL_INT a,RTL_INT b)
 {
-	return return_internal_representation(false, 1, (internal_quick_eval(a,b) == 0)? "1": "0");
+	std::size_t std_length = size_max(get_len(a), get_len(b));
+	a = resize(a, std_length);
+	b = resize(b, std_length);
+
+	auto bit_a = get_bitstring(a).crbegin();
+	auto bit_b = get_bitstring(b).crbegin();
+	for (; bit_a != get_bitstring(a).crend() && bit_b != get_bitstring(b).crend(); ++bit_a, ++bit_b)
+		if(*bit_a != *bit_b)	return V_ZERO;
+	
+	return V_ONE;
 }
-static std::vector<std::string> V_CASE_NOT_EQUAL(std::vector<std::string> a,std::vector<std::string> b)
+RTL_INT V_CASE_NOT_EQUAL(RTL_INT a,RTL_INT b)
 {
-	return return_internal_representation(false, 1, (internal_quick_eval(a,b) != 0)? "1": "0");
+	return V_LOGICAL_NOT(V_CASE_EQUAL(a,b));
 }
 
-static std::vector<std::string> V_SIGNED_SHIFT_LEFT(std::vector<std::string> a, std::size_t b)
+/**
+ * Shift operations
+ */
+RTL_INT V_SIGNED_SHIFT_LEFT(RTL_INT a, RTL_INT b)
+{
+	if(is_dont_care_string(get_bitstring(b)))	
+		return V_UNK;
+
+	EVAL_RESULT compare_result = return_int_eval(b, 0);
+	if(compare_result == EQUAL)					return a;
+	else if(compare_result == LESS_THAN)		return V_SIGNED_SHIFT_RIGHT(a,V_MINUS(b));
+	else										return V_SIGNED_SHIFT_LEFT(a,v_strtoul(get_bitstring(b),2));
+
+}
+RTL_INT V_SIGNED_SHIFT_LEFT(RTL_INT a, std::size_t b)
 {
 	get_bitstring(a).append(std::string(b,'0'));
 	return readjust_size(a); 
 }
 
-static std::vector<std::string> V_SIGNED_SHIFT_RIGHT(std::vector<std::string> a, std::size_t b)
+RTL_INT V_SIGNED_SHIFT_RIGHT(RTL_INT a, RTL_INT b)
+{
+	if(is_dont_care_string(get_bitstring(b)))	
+		return V_UNK;
+		
+	EVAL_RESULT compare_result = return_int_eval(b, 0);
+	if(compare_result == EQUAL)					return a;
+	else if(compare_result == LESS_THAN)		return V_SIGNED_SHIFT_LEFT(a,V_MINUS(b));
+	else										return V_SIGNED_SHIFT_RIGHT(a,v_strtoul(get_bitstring(b),2));
+
+}
+RTL_INT V_SIGNED_SHIFT_RIGHT(RTL_INT a, std::size_t b)
 {
 	get_bitstring(a) = get_bitstring(a).substr(0,get_len(a)-b);
 	return readjust_size(a); 
 }
 
-static std::vector<std::string> V_SHIFT_LEFT(std::vector<std::string> a, std::size_t b)
+RTL_INT V_SHIFT_LEFT(RTL_INT a, RTL_INT b)
+{
+	if(is_dont_care_string(get_bitstring(b)))	
+		return V_UNK;
+		
+	EVAL_RESULT compare_result = return_int_eval(b, 0);
+	if(compare_result == EQUAL)					return a;
+	else if(compare_result == LESS_THAN)		return V_SHIFT_RIGHT(a,V_MINUS(b));
+	else										return V_SHIFT_LEFT(a,v_strtoul(get_bitstring(b),2));
+
+}
+RTL_INT V_SHIFT_LEFT(RTL_INT a, std::size_t b)
 {
 	return V_SIGNED_SHIFT_LEFT(set_sign(a, false),b);  
 }
 
-static std::vector<std::string> V_SHIFT_RIGHT(std::vector<std::string> a, std::size_t b)
+RTL_INT V_SHIFT_RIGHT(RTL_INT a, RTL_INT b)
+{
+	if(is_dont_care_string(get_bitstring(b)))	
+		return V_UNK;
+		
+	EVAL_RESULT compare_result = return_int_eval(b, 0);
+	if(compare_result == EQUAL)					return a;
+	else if(compare_result == LESS_THAN)		return V_SHIFT_LEFT(a,V_MINUS(b));
+	else										return V_SHIFT_RIGHT(a,v_strtoul(get_bitstring(b),2));
+
+}
+RTL_INT V_SHIFT_RIGHT(RTL_INT a, std::size_t b)
 {
 	return V_SIGNED_SHIFT_RIGHT(set_sign(a, false),b); 
 }
 
-static std::vector<std::string> V_LOGICAL_AND(std::vector<std::string> a,std::vector<std::string> b)
+/**
+ * Logical Operations
+ */
+RTL_INT V_LOGICAL_AND(RTL_INT a,RTL_INT b)
 {
+	if(is_dont_care_string(get_bitstring(a)) || is_dont_care_string(get_bitstring(b)))
+		return V_UNK;
+
 	return V_REDUCTION_AND(V_REDUCTION_OR(a),V_REDUCTION_OR(b));
 }
 
-static std::vector<std::string> V_LOGICAL_OR(std::vector<std::string> a,std::vector<std::string> b)
+RTL_INT V_LOGICAL_OR(RTL_INT a,RTL_INT b)
 {
+	if(is_dont_care_string(get_bitstring(a)) || is_dont_care_string(get_bitstring(b)))
+		return V_UNK;
+
 	return V_REDUCTION_OR(V_REDUCTION_OR(a),V_REDUCTION_OR(b));
 }
 
-static std::vector<std::string> V_LT(std::vector<std::string> a,std::vector<std::string> b)
+RTL_INT V_LT(RTL_INT a,RTL_INT b)
 {
-	return	return_internal_representation(false, 1, (internal_quick_eval(a,b) == -1) 	? "1":"0");
+	if(is_dont_care_string(get_bitstring(a)) || is_dont_care_string(get_bitstring(b)))
+		return V_UNK;
+
+	return	return_internal_representation(false, 1, (return_int_eval(a,b) == LESS_THAN) 	? "1":"0");
 }
 
-static std::vector<std::string> V_GT(std::vector<std::string> a,std::vector<std::string> b)
+RTL_INT V_GT(RTL_INT a,RTL_INT b)
 {
-	return	return_internal_representation(false, 1, (internal_quick_eval(a,b) == 1) 	? "1":"0");
+	if(is_dont_care_string(get_bitstring(a)) || is_dont_care_string(get_bitstring(b)))
+		return V_UNK;
+
+	return	return_internal_representation(false, 1, (return_int_eval(a,b) == GREATHER_THAN) 	? "1":"0");
 }
 
-static std::vector<std::string> V_LE(std::vector<std::string> a,std::vector<std::string> b)
+RTL_INT V_LE(RTL_INT a,RTL_INT b)
 {
-	return	return_internal_representation(false, 1, (internal_quick_eval(a,b) != 1) 	? "1":"0");
+	if(is_dont_care_string(get_bitstring(a)) || is_dont_care_string(get_bitstring(b)))
+		return V_UNK;
+
+	return	return_internal_representation(false, 1, (return_int_eval(a,b) != GREATHER_THAN) 	? "1":"0");
 }
 
-static std::vector<std::string> V_GE(std::vector<std::string> a,std::vector<std::string> b)
+RTL_INT V_GE(RTL_INT a,RTL_INT b)
 {
-	return	return_internal_representation(false, 1, (internal_quick_eval(a,b) != -1) 	? "1":"0");
+	if(is_dont_care_string(get_bitstring(a)) || is_dont_care_string(get_bitstring(b)))
+		return V_UNK;
+
+	return	return_internal_representation(false, 1, (return_int_eval(a,b) != LESS_THAN) 	? "1":"0");
 }
 
-static std::vector<std::string> V_EQUAL(std::vector<std::string> a,std::vector<std::string> b)
+RTL_INT V_EQUAL(RTL_INT a,RTL_INT b)
 {
-	return	return_internal_representation(false, 1, (internal_quick_eval(a,b) == 0) 	? "1":"0");
+	if(is_dont_care_string(get_bitstring(a)) || is_dont_care_string(get_bitstring(b)))
+		return V_UNK;
+
+	return	return_internal_representation(false, 1, (return_int_eval(a,b) == EQUAL) 	? "1":"0");
 }
 
-static std::vector<std::string> V_NOT_EQUAL(std::vector<std::string> a,std::vector<std::string> b)
+RTL_INT V_NOT_EQUAL(RTL_INT a,RTL_INT b)
 {
-	return	return_internal_representation(false, 1, (internal_quick_eval(a,b) != 0) 	? "1":"0");
+	if(is_dont_care_string(get_bitstring(a)) || is_dont_care_string(get_bitstring(b)))
+		return V_UNK;
+
+	return	return_internal_representation(false, 1, (return_int_eval(a,b) != EQUAL) 	? "1":"0");
 }
 
-static std::vector<std::string> V_ADD(std::vector<std::string> a,std::vector<std::string> b)
+RTL_INT V_ADD(RTL_INT a,RTL_INT b)
 {
+	if(is_dont_care_string(get_bitstring(a)) || is_dont_care_string(get_bitstring(b)))
+		return V_UNK;
+
 	char previous_carry = '0';
 	std::string result = "";
 	std::size_t std_length = size_max(get_len(a), get_len(b));
 	a = resize(a, std_length);
 	b = resize(b, std_length);
 
-	for(std::size_t i=std_length-1; i < std_length; i--)
+	auto bit_a = get_bitstring(a).crbegin();
+	auto bit_b = get_bitstring(b).crbegin();
+	for (; bit_a != get_bitstring(a).crend() && bit_b != get_bitstring(b).crend(); ++bit_a, ++bit_b)
 	{
-		PUSH_MSB(result,add_func(get_bit(a, i), get_bit(b, i), previous_carry));
-		PUSH_MSB(result,carry_func(get_bit(a, i), get_bit(b, i), previous_carry));
+		PUSH_MSB(result,add_func(*bit_a, *bit_b, previous_carry));
+		PUSH_MSB(result,carry_func(*bit_a, *bit_b, previous_carry));
 	}
 	PUSH_MSB(result,previous_carry);
 
 	return	return_internal_representation(is_signed(a) && is_signed(b), std_length+1, result);
 }
 
-static std::vector<std::string> V_MINUS(std::vector<std::string> a,std::vector<std::string> b)
+RTL_INT V_MINUS(RTL_INT a,RTL_INT b)
 {
+	if(is_dont_care_string(get_bitstring(a)) || is_dont_care_string(get_bitstring(b)))
+		return V_UNK;
+
 	return V_ADD(a, V_MINUS(b));
 }
 
-static std::vector<std::string> V_MULTIPLY(std::vector<std::string> a,std::vector<std::string> b)
+RTL_INT V_MULTIPLY(RTL_INT a,RTL_INT b)
 {
-	std::vector<std::string> result = return_internal_representation(is_signed(a) && is_signed(b),0,"0");
+	if(is_dont_care_string(get_bitstring(a)) || is_dont_care_string(get_bitstring(b)))
+		return V_UNK;
+
 	a = readjust_size(a);
 	b = readjust_size(b);
-	std::size_t std_length = get_len(a);
-	for(std::size_t i=std_length-1; i < std_length; i--)
-		if(get_bit(a, i) == '1')
-			result = V_ADD(result,V_SHIFT_LEFT(b, std_length-1-i));
+	std::size_t std_length = std::max(get_len(b),get_len(a))*2;
+	RTL_INT result = return_internal_representation(is_signed(a) && is_signed(b),std_length,"0");
+	
+	std::size_t current_shift =0;
+	auto bit_a = get_bitstring(a).crbegin();
+	for (; bit_a != get_bitstring(a).crend(); ++bit_a, ++current_shift)
+		if(*bit_a == '1')
+			result = V_ADD(result,V_SHIFT_LEFT(b, current_shift));
 
 	// TODO what size do we go to ??
 	return result;
 }
 
-static std::vector<std::string> V_POWER(std::vector<std::string> a,std::vector<std::string> b)
+RTL_INT V_POWER(RTL_INT a,RTL_INT b)
 {
-	std::vector<std::string> result = return_internal_representation(is_signed(a) && is_signed(b),0,"1");
-	while(internal_quick_eval(b,V_ZERO) > 0)
+	if(is_dont_care_string(get_bitstring(a)) || is_dont_care_string(get_bitstring(b)))
+		return V_UNK;
+
+	RTL_INT result = return_internal_representation(is_signed(a) && is_signed(b),0,"1");
+	while(return_int_eval(b,0) == GREATHER_THAN)
 	{
 		b = V_MINUS_MINUS(b);
 		result = V_MULTIPLY( result, a);
@@ -828,15 +934,19 @@ static std::vector<std::string> V_POWER(std::vector<std::string> a,std::vector<s
 	// TODO negative power !!!( is it suported ?)
 	return result;
 }
-static std::vector<std::string> V_DIV(std::vector<std::string> a,std::vector<std::string> b)
+RTL_INT V_DIV(RTL_INT a,RTL_INT b)
 {
-	std::vector<std::string> result = return_internal_representation(is_signed(a) && is_signed(b),0,"0");
+	if(is_dont_care_string(get_bitstring(a)) || is_dont_care_string(get_bitstring(b))
+	|| return_int_eval(b,0) == EQUAL)
+		return V_UNK;
+
+	RTL_INT result = return_internal_representation(is_signed(a) && is_signed(b),0,"0");
 	//TODO signed division!
-	while(internal_quick_eval(b, a) < 0)
+	while(return_int_eval(b, a) == LESS_THAN)
 	{
-		std::vector<std::string> count = return_internal_representation(is_signed(a) && is_signed(b),0,"1");
-		std::vector<std::string> sub_with = b;
-		for( std::vector<std::string> tmp = sub_with; internal_quick_eval(tmp, a) < 0; tmp = V_SHIFT_LEFT(tmp, 1))
+		RTL_INT count = return_internal_representation(is_signed(a) && is_signed(b),0,"1");
+		RTL_INT sub_with = b;
+		for( RTL_INT tmp = sub_with; return_int_eval(tmp, a) == LESS_THAN; tmp = V_SHIFT_LEFT(tmp, 1))
 		{
 			count = V_SHIFT_LEFT(count, 1);
 			sub_with = tmp;
@@ -847,13 +957,17 @@ static std::vector<std::string> V_DIV(std::vector<std::string> a,std::vector<std
 	return result;
 }
 
-static std::vector<std::string> V_MOD(std::vector<std::string> a,std::vector<std::string> b)
+RTL_INT V_MOD(RTL_INT a,RTL_INT b)
 {
+	if(is_dont_care_string(get_bitstring(a)) || is_dont_care_string(get_bitstring(b))
+	|| return_int_eval(b, 0) == EQUAL)
+		return V_UNK;
+
 	//TODO signed division!
-	while(internal_quick_eval(b, a) < 0)
+	while(return_int_eval(b, a)  == LESS_THAN)
 	{
-		std::vector<std::string> sub_with = b;
-		for( std::vector<std::string> tmp = sub_with; internal_quick_eval(tmp, a) < 0; tmp = V_SHIFT_LEFT(tmp, 1))
+		RTL_INT sub_with = b;
+		for( RTL_INT tmp = sub_with; return_int_eval(tmp, a) == LESS_THAN; tmp = V_SHIFT_LEFT(tmp, 1))
 		{
 			sub_with = tmp;
 		}
@@ -868,148 +982,11 @@ static std::vector<std::string> V_MOD(std::vector<std::string> a,std::vector<std
  *     |  |___ |  \ | \| /~~\ |  \  |     \__/ |    |___ |  \ /~~\  |  | \__/ | \| 
  *                                                                                 
 */
-static std::vector<std::string> V_TERNARY(std::vector<std::string> a, std::vector<std::string> b, std::vector<std::string> c)
+RTL_INT V_TERNARY(RTL_INT a, RTL_INT b, RTL_INT c)
 {
 	/*	if a evaluates properly	*/
-	std::vector<std::string> eval = V_REDUCTION_OR(a);
-	if(internal_quick_eval(eval, V_ONE) == 0)	
-	{	
-		std::cout << get_bitstring(eval) << " evaluates to true\n";
-		return b;
-	}
-	else if(internal_quick_eval(eval, V_ZERO) == 0)	
-	{
-		std::cout << get_bitstring(eval) << " evaluates to false\n";
-		return c; 
-	}
-	else		
-	{				
-		std::cout << get_bitstring(eval) << " evaluates to unknown\n";					
-		return V_REDUX(b,c,l_ternary);
-	}
-}
-
-
-/***
- *     __   __       ___  __   __           ___       __       
- *    /  ` /  \ |\ |  |  |__) /  \ |       |__  |    /  \ |  | 
- *    \__, \__/ | \|  |  |  \ \__/ |___    |    |___ \__/ |/\| 
- *                                                             
- */
-std::string arithmetic(std::string op, std::string a_in)
-{
-	std::vector<std::string> a = standardize_input(a_in);
-
-	/* return Process Operator via ternary */
-	return	v_bin_string(	(op == "~")		?		V_NEG(a):
-							(op == "-")		?		V_MINUS(a):
-							(op == "+")		?		V_ADD(a):
-							(op == "++")	?		V_PLUS_PLUS(a):
-							(op == "--")	?		V_MINUS_MINUS(a):
-							(op == "&")		?		V_REDUCTION_AND(a):
-							(op == "|")		?		V_REDUCTION_OR(a):
-							(op == "^")		?		V_REDUCTION_XOR(a):
-							(op == "~&")	?		V_REDUCTION_NAND(a):
-							(op == "~|")	?		V_REDUCTION_NOR(a):
-							(op == "~^"	
-							|| op == "~^")	?		V_REDUCTION_XNOR(a):
-							(op == "!")		?		V_LOGICAL_NOT(a):
-													bad_ops(op));
-
-}
-
-std::string arithmetic(std::string a_in, std::string op, std::string b_in)
-{
-	std::vector<std::string> a = standardize_input(a_in);
-	std::vector<std::string> b = standardize_input(b_in);
-	
-	/* return Process Operator via ternary */
-	return	v_bin_string(	/*	Reduction Ops	*/
-							(op == "&")		?		V_REDUCTION_AND(a,b):
-							(op == "|")		?		V_REDUCTION_OR(a,b):
-							(op == "^")		?		V_REDUCTION_XOR(a,b):
-							(op == "~&")	?		V_REDUCTION_NAND(a,b):
-							(op == "~|")	?		V_REDUCTION_NOR(a,b):
-							(op == "~^"	
-							|| op == "~^")	?		V_REDUCTION_XNOR(a,b):
-							/*	Case test	*/
-							(op == "===" )	?		V_CASE_EQUAL(a,b):
-							(op == "!==")	?		V_CASE_NOT_EQUAL(a,b):
-							/*	Shift Operator	*/
-							(op == "<<")	?		(is_dont_care_string(get_bitstring(b))) 	? 	V_UNK:
-													(internal_quick_eval(b, V_ZERO)==0)			?	a:
-													(internal_quick_eval(b, V_ZERO)==-1)		?	V_SHIFT_RIGHT(a,v_strtoul(get_bitstring(V_MINUS(b)),2)):
-																									V_SHIFT_LEFT(a,v_strtoul(get_bitstring(b),2)):
-							(op == "<<<")	?		(is_dont_care_string(get_bitstring(b))) 	? 	V_UNK:
-													(internal_quick_eval(b, V_ZERO)==0)			?	a:
-													(internal_quick_eval(b, V_ZERO)==-1)		?	V_SIGNED_SHIFT_RIGHT(a,v_strtoul(get_bitstring(V_MINUS(b)),2)):
-																									V_SIGNED_SHIFT_LEFT(a,v_strtoul(get_bitstring(b),2)):
-							(op == ">>")	?		(is_dont_care_string(get_bitstring(b))) 	? 	V_UNK:
-													(internal_quick_eval(b, V_ZERO)==0)			?	a:
-													(internal_quick_eval(b, V_ZERO)==-1)		?	V_SHIFT_LEFT(a,v_strtoul(get_bitstring(V_MINUS(b)),2)):
-																									V_SHIFT_RIGHT(a,v_strtoul(get_bitstring(b),2)):
-							(op == ">>>")	?		(is_dont_care_string(get_bitstring(b))) 	? 	V_UNK:
-													(internal_quick_eval(b, V_ZERO)==0)			?	a:
-													(internal_quick_eval(b, V_ZERO)==-1)		?	V_SIGNED_SHIFT_LEFT(a,v_strtoul(get_bitstring(V_MINUS(b)),2)):
-																									V_SIGNED_SHIFT_RIGHT(a,v_strtoul(get_bitstring(b),2)):
-							/* Logical Operators */
-							(op == "&&")	?		(is_dont_care_string(get_bitstring(a))
-													|| is_dont_care_string(get_bitstring(b))) 	? 	V_UNK:
-																									V_LOGICAL_AND(a,b):
-							(op == "||")	?		(is_dont_care_string(get_bitstring(a))
-													|| is_dont_care_string(get_bitstring(b))) 	? 	V_UNK:
-																									V_LOGICAL_OR(a,b):
-							(op == "<")		?		(is_dont_care_string(get_bitstring(a))
-													|| is_dont_care_string(get_bitstring(b))) 	? 	V_UNK:
-																									V_LT(a,b):																																													
-							(op == ">")		?		(is_dont_care_string(get_bitstring(a))
-													|| is_dont_care_string(get_bitstring(b))) 	? 	V_UNK:
-																									V_GT(a,b):
-							(op == "<=")	?		(is_dont_care_string(get_bitstring(a))
-													|| is_dont_care_string(get_bitstring(b))) 	? 	V_UNK:
-																									V_LE(a,b):
-							(op == ">=")	?		(is_dont_care_string(get_bitstring(a))
-													|| is_dont_care_string(get_bitstring(b))) 	? 	V_UNK:
-																									V_GE(a,b):
-							(op == "==")	?		(is_dont_care_string(get_bitstring(a))
-													|| is_dont_care_string(get_bitstring(b))) 	? 	V_UNK:
-																									V_EQUAL(a,b):
-							(op == "!=")	?		(is_dont_care_string(get_bitstring(a))
-													|| is_dont_care_string(get_bitstring(b))) 	? 	V_UNK:
-																									V_NOT_EQUAL(a,b):
-							/* arithmetic Operators */																
-							(op == "+")		?		(is_dont_care_string(get_bitstring(a))
-													|| is_dont_care_string(get_bitstring(b))) 	? 	V_UNK:
-																									V_ADD(a,b):
-							(op == "-")		?		(is_dont_care_string(get_bitstring(a))
-													|| is_dont_care_string(get_bitstring(b))) 	? 	V_UNK:
-																									V_MINUS(a,b):
-							(op == "*")		?		(is_dont_care_string(get_bitstring(a))
-													|| is_dont_care_string(get_bitstring(b))) 	? 	V_UNK:
-																									V_MULTIPLY(a,b):
-							(op == "**")	?		(is_dont_care_string(get_bitstring(a))
-													|| is_dont_care_string(get_bitstring(b))) 	? 	V_UNK:
-																									V_POWER(a,b):
-							/* cannot div by 0 */
-							(op == "/")		?		(is_dont_care_string(get_bitstring(a))
-													|| is_dont_care_string(get_bitstring(b))
-													|| get_bitstring(V_LE(b, V_ZERO)) == "1")	?	V_UNK:
-																									V_DIV(a,b):
-							(op == "%")		?		(is_dont_care_string(get_bitstring(a))
-													|| is_dont_care_string(get_bitstring(b))
-													|| get_bitstring(V_LE(b, V_ZERO)) == "1")	?	V_UNK:
-																									V_MOD(a,b):																																																																																																																																																																																																															
-													bad_ops(op));
-}
-
-std::string arithmetic(std::string a_in, std::string op1 ,std::string b_in, std::string op2, std::string c_in)
-{
-	std::vector<std::string> a = standardize_input(a_in);
-	std::vector<std::string> b = standardize_input(b_in);
-	std::vector<std::string> c = standardize_input(c_in);
-	
-	 /* return Process Operator via ternary */
-	return	v_bin_string(	(op1 != "?")	?	bad_ops(op1):
-							(op2 != ":")	?	bad_ops(op2):
-												V_TERNARY(a,b,c));
+	EVAL_RESULT eval = return_int_eval(V_LOGICAL_NOT(a),V_ZERO);
+	if(eval == UNKNOWN)		return V_REDUX(b,c,l_ternary);
+	else if(eval == EQUAL)	return b;
+	else					return c;
 }
