@@ -4,6 +4,13 @@
 
 #include "rtl_int.h"
 
+/* Authors: Aaron Graham (aaron.graham@unb.ca, aarongraham9@gmail.com),
+ *           Jean-Philippe Legault (jlegault@unb.ca, jeanphilippe.legault@gmail.com) and
+ *           Dr. Kenneth B. Kent (ken@unb.ca)
+ *           for the Reconfigurable Computing Research Lab at the
+ *           Univerity of New Brunswick in Fredericton, New Brunswick, Canada
+ */
+
 #define bad_ops(test) _bad_ops(test, __func__, __LINE__)
 inline static RTL_INT _bad_ops(std::string test, const char *FUNCT, int LINE)	
 {	
