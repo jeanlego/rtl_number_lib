@@ -582,7 +582,19 @@ EVAL_RESULT return_int_eval(RTL_INT a,long b)
 }
 
 
-//TODO: is it LSB -> MSB or MSB -> LSB
+//LSB -> MSB
+inline static RTL_INT V_REDUX(RTL_INT a, const char lut[4])
+{
+	std::string result = "";
+	std::size_t std_length = get_len(a);
+
+	auto bit_a = get_bitstring(a).crbegin();
+	for (; bit_a != get_bitstring(a).crend(); ++bit_a)
+		PUSH_MSB(result, v_unary_op(*bit_a,lut));
+
+	return return_internal_representation(is_signed(a), std_length, result);
+}
+
 inline static RTL_INT V_REDUX(RTL_INT a, const char lut[4][4])
 {
 	std::size_t end = get_len(a)-1;
@@ -609,18 +621,17 @@ inline static RTL_INT V_REDUX(RTL_INT a, RTL_INT b, const char lut[4][4])
 	return return_internal_representation(false, std_length, result);
 }
 
-inline static RTL_INT V_INCREMENT(RTL_INT a, const char lut_adder[4][4], const char lut_carry[4][4])
+inline static RTL_INT V_INCREMENT(RTL_INT a, const char lut_adder[4][4], const char lut_carry[4][4], signed const char initial)
 {
 	std::string result = "";
-	char tmp_carry  = '0';
+	char tmp_carry  = initial;
 	
 	auto bit_a = get_bitstring(a).crbegin();
     for (; bit_a != get_bitstring(a).crend(); ++bit_a) {
 		PUSH_MSB(result, v_binary_op(*bit_a,tmp_carry, lut_adder));
 		tmp_carry = v_binary_op(*bit_a, tmp_carry, lut_carry);
 	}
-	return return_internal_representation(is_signed(a), get_len(a)
-	, result);
+	return return_internal_representation(is_signed(a), get_len(a), result);
 }
 
 /***
@@ -632,22 +643,17 @@ inline static RTL_INT V_INCREMENT(RTL_INT a, const char lut_adder[4][4], const c
 
 RTL_INT V_NEG(RTL_INT a)
 {
-	std::string result = "";
-	auto bit_a = get_bitstring(a).crbegin();
-    for (; bit_a != get_bitstring(a).crend(); ++bit_a)
-		PUSH_MSB(result, v_not(*bit_a));
-	
-	return return_internal_representation(false, result.length(), result);
+	return V_REDUX(a,l_not);
 }
 
 RTL_INT V_PLUS_PLUS(RTL_INT a)
 {
-	return V_INCREMENT(a, l_xor, l_and);
+	return V_INCREMENT(a, l_xor, l_and, '1');
 }
 
 RTL_INT  V_MINUS_MINUS(RTL_INT a)
 {
-	return V_INCREMENT(a, l_xnor, l_or);
+	return V_INCREMENT(a, l_xnor, l_or, '0');
 }
 
 RTL_INT V_ADD(RTL_INT a)
