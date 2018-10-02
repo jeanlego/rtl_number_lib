@@ -74,7 +74,7 @@ std::string arithmetic(std::string a_in, std::string op, std::string b_in)
 							(op == "<<")	?		V_SHIFT_LEFT(a,b):
 							(op == "<<<")	?		V_SIGNED_SHIFT_LEFT(a,b):
 							(op == ">>")	?		V_SHIFT_RIGHT(a,b):
-							(op == ">>>")	?		V_SIGNED_SHIFT_LEFT(a,b):
+							(op == ">>>")	?		V_SIGNED_SHIFT_RIGHT(a,b):
 							/* Logical Operators */
 							(op == "&&")	?		V_LOGICAL_AND(a,b):
 							(op == "||")	?		V_LOGICAL_OR(a,b):

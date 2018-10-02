@@ -111,8 +111,14 @@ inline static std::size_t _get_len(RTL_INT& internal_bit_struct, const char *FUN
 	std::size_t current_bit_width = internal_bit_struct[2].length();
 
 	if(defined_size == 0)
+	{
+		//remove padding bits
+		std::size_t loc = internal_bit_struct[2].find_first_not_of(internal_bit_struct[2][MSB]);
+		if(loc != std::string::npos && loc)
+			internal_bit_struct[2].erase(0,loc);
+
 		return current_bit_width;
-	
+	}
 	else
 	{
 		//expand to length
@@ -143,7 +149,6 @@ inline static char _get_bit(RTL_INT internal_bit_struct, std::size_t location, c
 }
 
 #define is_signed(bits)	(bits[0] == "0")? 0 : 1
-
 inline static RTL_INT resize(RTL_INT internal_bit_struct, std::size_t len)
 {
 	internal_bit_struct[1] = std::to_string(len);
@@ -289,7 +294,7 @@ RTL_INT standardize_input(std::string input_number)
 	std::size_t loc = input_number.find("\'");
 	if(loc == std::string::npos)
 	{
-		input_number.insert(0, "\'sd");
+		input_number.insert(0, "\'d");
 		loc = 0;
 	}
 
@@ -405,6 +410,22 @@ static const char l_and[4][4] = {
 	/* 1 */	{'0','1','x','x'},	
 	/* x */	{'0','x','x','x'},	
 	/* z */	{'0','x','x','x'}
+};
+
+static const char l_case_eq[4][4] = {
+	/* a  /	 0   1   x   z 	<-b */	
+	/* 0 */	{'1','0','0','0'},	
+	/* 1 */	{'0','1','0','0'},	
+	/* x */	{'0','0','1','0'},	
+	/* z */	{'0','0','0','1'}
+};
+
+static const char l_case_not_eq[4][4] = {
+	/* a  /	 0   1   x   z 	<-b */	
+	/* 0 */	{'0','1','1','1'},	
+	/* 1 */	{'1','0','1','1'},	
+	/* x */	{'1','1','0','1'},	
+	/* z */	{'1','1','1','0'}
 };
 
 static const char l_or[4][4] = {
@@ -738,7 +759,6 @@ RTL_INT V_REDUCTION_XNOR(RTL_INT a,RTL_INT b)
 	return V_REDUX(a,b,l_xnor);
 }
 
-// TODO: fix me!!! this is bit by bit comparison!!!
 RTL_INT V_CASE_EQUAL(RTL_INT a,RTL_INT b)
 {
 	std::size_t std_length = size_max(get_len(a), get_len(b));
@@ -761,18 +781,19 @@ RTL_INT V_CASE_NOT_EQUAL(RTL_INT a,RTL_INT b)
  * Shift operations
  */
 
-inline static void shift_op(std::string& bit_string, std::size_t len, signed char padding_bit)
+inline static void shift_op(std::string& bit_string, int len, signed char padding_bit)
 {
+	std::string pad(std::abs(len),padding_bit);
 	//shift left , let it grow, let it grow ...
 	if(len > 0)	
 	{
-		bit_string.append(std::string(len,padding_bit));
+		bit_string.append(pad);
 	}
 	//shift right, because it's the rightest thing to do
 	else if(len < 0)
 	{
-		bit_string.erase(bit_string.length()-len);
-		bit_string.insert(MSB,std::string(len,padding_bit));
+		bit_string.erase(bit_string.length()+len);
+		bit_string.insert(MSB,pad);
 	}
 }
 RTL_INT V_SIGNED_SHIFT_LEFT(RTL_INT a, RTL_INT b)
@@ -780,7 +801,10 @@ RTL_INT V_SIGNED_SHIFT_LEFT(RTL_INT a, RTL_INT b)
 	if(is_dont_care_string(get_bitstring(b)))	
 		return V_UNK;
 	
-	shift_op(get_bitstring(a), v_strtoul(get_bitstring(b),2), '0');
+	std::size_t len = v_strtoul(get_bitstring(b),2);
+	shift_op(get_bitstring(a), len, '0');
+	a = resize(a,0);
+	a = resize(a,get_len(a));
 	return a;
 }
 
@@ -794,7 +818,7 @@ RTL_INT V_SIGNED_SHIFT_RIGHT(RTL_INT a, RTL_INT b)
 	if(is_dont_care_string(get_bitstring(b)))	
 		return V_UNK;
 	
-	shift_op(get_bitstring(a), -1 *v_strtoul(get_bitstring(b),2), get_bit(b,MSB));
+	shift_op(get_bitstring(a), -1 *v_strtoul(get_bitstring(b),2), get_bit(a,MSB));
 	return a;
 }
 
@@ -895,7 +919,7 @@ RTL_INT V_ADD(RTL_INT a,RTL_INT b)
 	}
 	PUSH_MSB(result,previous_carry);
 
-	return	return_internal_representation(is_signed(a) && is_signed(b), std_length+1, result);
+	return	return_internal_representation(is_signed(a) && is_signed(b), std_length, result);
 }
 
 RTL_INT V_MINUS(RTL_INT a,RTL_INT b)
