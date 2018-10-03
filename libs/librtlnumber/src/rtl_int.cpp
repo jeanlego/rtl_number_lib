@@ -66,11 +66,7 @@ inline static char _bad_value(char test, const char *FUNCT, int LINE)
 #define V_S_UNK return_internal_representation(true,2,"xx")
 #define V_S_NEG_ONE return_internal_representation(true,2,"11")
 
-
-#define V_BAD return_internal_representation(true,0,"xx0x00x0x0x0x0x0x0x0x0x")
-
 #define is_dont_care_string(input) (input.find("xXzZ") != std::string::npos)
-
 #define assert_string_of_radix(input, radix) _assert_string_of_radix(input, radix, __func__,__LINE__)
 inline static void _assert_string_of_radix(std::string input, std::size_t radix, const char *FUNCT, int LINE)
 {
@@ -363,44 +359,7 @@ std::string v_bin_string(RTL_INT internal_binary_number)
  * only use this to evaluate any expression for the number_t binary digits.
  * reference: http://staff.ustc.edu.cn/~songch/download/IEEE.1364-2005.pdf
  * 
- *******************************************************/ 
-#define REF_0 0
-#define REF_1 1
-#define REF_x 2
-#define REF_z 3
-
-#define v_unary_op(a,op) _v_unary_op(a, op, __func__, __LINE__)
-inline static char _v_unary_op(const char a, const char lut[4], const char *FUNCT, int LINE) 
-{
-	return 	((a) == '0')				?	lut[REF_0] :
-			((a) == '1')				?	lut[REF_1] :
-			(std::tolower(a) == 'x')	?	lut[REF_x] : 
-			(std::tolower(a) == 'z')	?	lut[REF_z] :
-											_bad_value(a, FUNCT,LINE)
-			;
-}
-
-#define v_binary_op(a,b,op)	_v_binary_op(a, b, op, __func__, __LINE__)
-inline static char _v_binary_op(const char a, const char b, const char lut[4][4], const char *FUNCT, int LINE) 
-{
-	return 	((a) == '0')				? 	_v_unary_op(b, lut[REF_0], FUNCT, LINE)	:
-			((a) == '1')				? 	_v_unary_op(b, lut[REF_1], FUNCT, LINE) :
-			(std::tolower(a) == 'x')	?	_v_unary_op(b, lut[REF_x], FUNCT, LINE)	: 
-			(std::tolower(a) == 'z')	?	_v_unary_op(b, lut[REF_z], FUNCT, LINE) :
-											_bad_value(a, FUNCT, LINE)
-			;
-}
-
-#define v_three_op(a,b,c,op)	_v_three_op(a, b, c, op, __func__, __LINE__)
-inline static char _v_three_op(const char a, const char b, const char c, const char lut[4][4][4], const char *FUNCT, int LINE) 
-{
-	return 	((a) == '0')				? 	_v_binary_op(b,c, lut[REF_0], FUNCT, LINE)	:
-			((a) == '1')				? 	_v_binary_op(b,c, lut[REF_1], FUNCT, LINE) :
-			(std::tolower(a) == 'x')	?	_v_binary_op(b,c, lut[REF_x], FUNCT, LINE)	: 
-			(std::tolower(a) == 'z')	?	_v_binary_op(b,c, lut[REF_z], FUNCT, LINE) :
-											_bad_value(a, FUNCT, LINE)
-			;
-}
+ *******************************************************/
 
 static const char l_buf[4] = {
 	/*	 0   1   x   z  <- a*/
@@ -418,22 +377,6 @@ static const char l_and[4][4] = {
 	/* 1 */	{'0','1','x','x'},	
 	/* x */	{'0','x','x','x'},	
 	/* z */	{'0','x','x','x'}
-};
-
-static const char l_case_eq[4][4] = {
-	/* a  /	 0   1   x   z 	<-b */	
-	/* 0 */	{'1','0','0','0'},	
-	/* 1 */	{'0','1','0','0'},	
-	/* x */	{'0','0','1','0'},	
-	/* z */	{'0','0','0','1'}
-};
-
-static const char l_case_not_eq[4][4] = {
-	/* a  /	 0   1   x   z 	<-b */	
-	/* 0 */	{'0','1','1','1'},	
-	/* 1 */	{'1','0','1','1'},	
-	/* x */	{'1','1','0','1'},	
-	/* z */	{'1','1','1','0'}
 };
 
 static const char l_or[4][4] = {
@@ -533,7 +476,7 @@ static const char l_nmos[4][4] = {
 };
 
 // see table 5-21 p:54 IEEE 1364-2005
-static const char l_ternary[4][4] = {
+static char l_ternary[4][4] = {
 	/* in /	 0   1   x   z 	<-control */	
 	/* 0 */	{'0','x','x','x'},
 	/* 1 */	{'x','1','x','x'},
@@ -541,46 +484,78 @@ static const char l_ternary[4][4] = {
 	/* z */	{'x','x','x','x'}
 };
 
-static const char l_sum[4][4][4] = {
-	/*	carry		{0}					{1}				  {x}				 {z}
-	/* a /	  0   1   x   z 	  0   1   x   z		 0   1   x   z		0   1   x   z <- b */	
-	/* 0 */	{{'0','1','x','x'},	{'1','0','x','x'}, {'x','x','x','x'}, {'x','x','x','x'}},
-	/* 1 */	{{'1','0','x','x'},	{'0','1','x','x'}, {'x','x','x','x'}, {'x','x','x','x'}},
-	/* x */	{{'x','x','x','x'},	{'x','x','x','x'}, {'x','x','x','x'}, {'x','x','x','x'}},
-	/* z */	{{'x','x','x','x'},	{'x','x','x','x'}, {'x','x','x','x'}, {'x','x','x','x'}}
-};
-static const char l_carry[4][4][4] = {
-	/*	carry		{0}					{1}				  {x}				 {z}
-	/* a /	  0   1   x   z 	  0   1   x   z		 0   1   x   z		0   1   x   z <- b */	
-	/* 0 */	{{'0','0','0','0'},	{'0','1','x','x'}, {'0','x','x','x'}, {'0','x','x','x'}},
-	/* 1 */	{{'0','1','x','x'},	{'1','1','1','1'}, {'x','1','x','x'}, {'x','1','x','x'}},
-	/* x */	{{'0','x','x','x'},	{'x','1','x','x'}, {'x','x','x','x'}, {'x','x','x','x'}},
-	/* z */	{{'0','x','x','x'},	{'x','1','x','x'}, {'x','x','x','x'}, {'x','x','x','x'}}
-};
+#define REF_0 0
+#define REF_1 1
+#define REF_x 2
+#define REF_z 3
+
+#define v_unary_op(a,op) _v_unary_op(a, op, __func__, __LINE__)
+inline static char _v_unary_op(const char a, const char lut[4], const char *FUNCT, int LINE) 
+{
+	return 	((a) == '0')				?	lut[REF_0] :
+			((a) == '1')				?	lut[REF_1] :
+			(std::tolower(a) == 'x')	?	lut[REF_x] : 
+			(std::tolower(a) == 'z')	?	lut[REF_z] :
+											_bad_value(a, FUNCT,LINE)
+			;
+}
+
+#define v_binary_op(a,b,op)	_v_binary_op(a, b, op, __func__, __LINE__)
+inline static char _v_binary_op(const char a, const char b, const char lut[4][4], const char *FUNCT, int LINE) 
+{
+	return 	((a) == '0')				? 	_v_unary_op(b, lut[REF_0], FUNCT, LINE)	:
+			((a) == '1')				? 	_v_unary_op(b, lut[REF_1], FUNCT, LINE) :
+			(std::tolower(a) == 'x')	?	_v_unary_op(b, lut[REF_x], FUNCT, LINE)	: 
+			(std::tolower(a) == 'z')	?	_v_unary_op(b, lut[REF_z], FUNCT, LINE) :
+											_bad_value(a, FUNCT, LINE)
+			;
+}
+
+#define v_sum(a,b,c)	_v_sum(a, b, c, __func__, __LINE__)
+inline static char _v_sum(const char a, const char b, const char c, const char *FUNCT, int LINE) 
+{
+	return 	((a) == '0')				? 	_v_binary_op(b,c, l_xor, FUNCT, LINE)	:
+			((a) == '1')				? 	_v_binary_op(b,c, l_xnor, FUNCT, LINE) :
+			(std::tolower(a) == 'x')	?	'x'	: 
+			(std::tolower(a) == 'z')	?	'x' :
+											_bad_value(a, FUNCT, LINE)
+			;
+}
+
+#define v_carry(a,b,c)	_v_carry(a, b, c, __func__, __LINE__)
+inline static char _v_carry(const char a, const char b, const char c, const char *FUNCT, int LINE) 
+{
+	return 	((a) == '0')				? 	_v_binary_op(b,c, l_and, FUNCT, LINE)	:
+			((a) == '1')				? 	_v_binary_op(b,c, l_or, FUNCT, LINE) :
+			(std::tolower(a) == 'x')	?	_v_binary_op(b,c, l_ternary, FUNCT, LINE)	: 
+			(std::tolower(a) == 'z')	?	_v_binary_op(b,c, l_ternary, FUNCT, LINE) :
+											_bad_value(a, FUNCT, LINE)
+			;
+}
 
 /***
  * these are extended defines to simplify our lives
  */
-#define v_buf(a)				v_unary_op(a, 				l_buf)
-#define v_not(a)				v_unary_op(a, 				l_not)
-#define v_and(a,b)				v_binary_op(a,b, 			l_and)
-#define v_or(a,b)				v_binary_op(a,b, 			l_or)
-#define v_xor(a,b)				v_binary_op(a,b, 			l_xor)
-#define v_nand(a,b)				v_binary_op(a,b, 			l_nand)
-#define v_nor(a,b)				v_binary_op(a,b, 			l_nor)
-#define v_xnor(a,b)				v_binary_op(a,b, 			l_xnor)
-#define v_notif1(in,control)	v_binary_op(in,control, 	l_notif1)
-#define v_notif0(in,control)	v_binary_op(in,control, 	l_notif0)
-#define v_bufif1(in,control)	v_binary_op(in,control, 	l_bufif1)
-#define v_bufif0(in,control)	v_binary_op(in,control, 	l_bufif0)
-#define v_rpmos(in, control)	v_binary_op(in,control, 	l_rpmos)
-#define v_pmos(in,control)		v_binary_op(in,control, 	l_pmos)
-#define v_rnmos(in, control)	v_binary_op(in,control, 	l_rnmos)
-#define v_nmos(in,control)		v_binary_op(in,control, 	l_nmos)
-#define v_ternary(in,control)	v_binary_op(in,control,		l_ternary)
+// #define v_buf(a)				v_unary_op(a, 				l_buf)
+// #define v_not(a)				v_unary_op(a, 				l_not)
+// #define v_and(a,b)				v_binary_op(a,b, 			l_and)
+// #define v_or(a,b)				v_binary_op(a,b, 			l_or)
+// #define v_xor(a,b)				v_binary_op(a,b, 			l_xor)
+// #define v_nand(a,b)				v_binary_op(a,b, 			l_nand)
+// #define v_nor(a,b)				v_binary_op(a,b, 			l_nor)
+// #define v_xnor(a,b)				v_binary_op(a,b, 			l_xnor)
+// #define v_notif1(in,control)	v_binary_op(in,control, 	l_notif1)
+// #define v_notif0(in,control)	v_binary_op(in,control, 	l_notif0)
+// #define v_bufif1(in,control)	v_binary_op(in,control, 	l_bufif1)
+// #define v_bufif0(in,control)	v_binary_op(in,control, 	l_bufif0)
+// #define v_rpmos(in, control)	v_binary_op(in,control, 	l_rpmos)
+// #define v_pmos(in,control)		v_binary_op(in,control, 	l_pmos)
+// #define v_rnmos(in, control)	v_binary_op(in,control, 	l_rnmos)
+// #define v_nmos(in,control)		v_binary_op(in,control, 	l_nmos)
+// #define v_ternary(in,control)	v_binary_op(in,control,		l_ternary)
 
-#define v_sum(a, b, carry)		v_three_op(a,b,carry,		l_sum)
-#define v_carry(a, b, carry)	v_three_op(a,b,carry,		l_carry)
+// #define v_sum(a, b, carry)		v_three_op(a,b,carry,		l_sum)
+// #define v_carry(a, b, carry)	v_three_op(a,b,carry,		l_carry)
 
 
 //TODO: signed numbers!
@@ -715,39 +690,39 @@ RTL_INT V_MINUS(RTL_INT a)
 	return V_PLUS_PLUS(V_NEG(a));
 }
 
-RTL_INT V_REDUCTION_AND(RTL_INT a)
+RTL_INT V_AND(RTL_INT a)
 {
 	return V_REDUX(a, l_and);
 }
 
-RTL_INT V_REDUCTION_OR(RTL_INT a)
+RTL_INT V_OR(RTL_INT a)
 {
 	return V_REDUX(a, l_or);	
 }
 
-RTL_INT V_REDUCTION_XOR(RTL_INT a)
+RTL_INT V_XOR(RTL_INT a)
 {
 	return V_REDUX(a, l_xor);
 }
 
-RTL_INT V_REDUCTION_NAND(RTL_INT a)
+RTL_INT V_NAND(RTL_INT a)
 {
-	return V_NEG(V_REDUCTION_AND(a));
+	return V_NEG(V_AND(a));
 }
 
-RTL_INT V_REDUCTION_NOR(RTL_INT a)
+RTL_INT V_NOR(RTL_INT a)
 {
-	return V_NEG(V_REDUCTION_OR(a));
+	return V_NEG(V_OR(a));
 }
 
-RTL_INT V_REDUCTION_XNOR(RTL_INT a)
+RTL_INT V_XNOR(RTL_INT a)
 {
-	return V_NEG(V_REDUCTION_XOR(a));
+	return V_NEG(V_XOR(a));
 }
 
 RTL_INT V_LOGICAL_NOT(RTL_INT a)
 {
-	return V_NEG(V_REDUCTION_OR(a));
+	return V_NEG(V_OR(a));
 }
 
 /***
@@ -757,32 +732,32 @@ RTL_INT V_LOGICAL_NOT(RTL_INT a)
  *                                                                          
  */
 
-RTL_INT V_REDUCTION_AND(RTL_INT a,RTL_INT b)
+RTL_INT V_AND(RTL_INT a,RTL_INT b)
 {
 	return V_REDUX(a,b,l_and);
 }
 
-RTL_INT V_REDUCTION_OR(RTL_INT a,RTL_INT b)
+RTL_INT V_OR(RTL_INT a,RTL_INT b)
 {
 	return V_REDUX(a,b,l_or);
 }
 
-RTL_INT V_REDUCTION_XOR(RTL_INT a,RTL_INT b)
+RTL_INT V_XOR(RTL_INT a,RTL_INT b)
 {
 	return V_REDUX(a,b,l_xor);
 }
 
-RTL_INT V_REDUCTION_NAND(RTL_INT a,RTL_INT b)
+RTL_INT V_NAND(RTL_INT a,RTL_INT b)
 {
 	return V_REDUX(a,b,l_nand);
 }
 
-RTL_INT V_REDUCTION_NOR(RTL_INT a,RTL_INT b)
+RTL_INT V_NOR(RTL_INT a,RTL_INT b)
 {
 	return V_REDUX(a,b,l_nor);
 }
 
-RTL_INT V_REDUCTION_XNOR(RTL_INT a,RTL_INT b)
+RTL_INT V_XNOR(RTL_INT a,RTL_INT b)
 {
 	return V_REDUX(a,b,l_xnor);
 }
@@ -868,7 +843,7 @@ RTL_INT V_LOGICAL_AND(RTL_INT a,RTL_INT b)
 	if(is_dont_care_string(get_bitstring(a)) || is_dont_care_string(get_bitstring(b)))
 		return V_UNK;
 
-	return V_REDUCTION_AND(V_REDUCTION_OR(a),V_REDUCTION_OR(b));
+	return V_AND(V_OR(a),V_OR(b));
 }
 
 RTL_INT V_LOGICAL_OR(RTL_INT a,RTL_INT b)
@@ -876,7 +851,7 @@ RTL_INT V_LOGICAL_OR(RTL_INT a,RTL_INT b)
 	if(is_dont_care_string(get_bitstring(a)) || is_dont_care_string(get_bitstring(b)))
 		return V_UNK;
 
-	return V_REDUCTION_OR(V_REDUCTION_OR(a),V_REDUCTION_OR(b));
+	return V_OR(V_OR(a),V_OR(b));
 }
 
 RTL_INT V_LT(RTL_INT a,RTL_INT b)
