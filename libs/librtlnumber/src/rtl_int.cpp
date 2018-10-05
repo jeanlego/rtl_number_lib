@@ -1,3 +1,10 @@
+/* Authors: Aaron Graham (aaron.graham@unb.ca, aarongraham9@gmail.com),
+ *           Jean-Philippe Legault (jlegault@unb.ca, jeanphilippe.legault@gmail.com) and
+ *            Dr. Kenneth B. Kent (ken@unb.ca)
+ *            for the Reconfigurable Computing Research Lab at the
+ *             Univerity of New Brunswick in Fredericton, New Brunswick, Canada
+ */
+
 #include <cstdarg>
 #include <stdio.h>
 #include <algorithm>
@@ -7,13 +14,6 @@
 #include <iostream>
 
 #include "rtl_int.h"
-
-/* Authors: Aaron Graham (aaron.graham@unb.ca, aarongraham9@gmail.com),
- *           Jean-Philippe Legault (jlegault@unb.ca, jeanphilippe.legault@gmail.com) and
- *           Dr. Kenneth B. Kent (ken@unb.ca)
- *           for the Reconfigurable Computing Research Lab at the
- *           Univerity of New Brunswick in Fredericton, New Brunswick, Canada
- */
 
 // this sets the default bit width
 #define DEFAULT_BIT_WIDTH 32
