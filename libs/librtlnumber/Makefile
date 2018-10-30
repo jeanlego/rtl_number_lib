@@ -4,11 +4,13 @@
 #          for the Reconfigurable Computing Research Lab at the
 #           Univerity of New Brunswick in Fredericton, New Brunswick, Canada
 
+SRC=
+
 .PHONY: all
 
 #Build everything
 all: 
-	clang++ -Weverything -ggdb -I src/ src/rtl_int.cpp main.cpp -o rtl_number
+	clang++ -Weverything -ggdb -I src/ src/*.cpp main.cpp -o rtl_number
 
 clean:
 	rm -Rf ./rtl_number

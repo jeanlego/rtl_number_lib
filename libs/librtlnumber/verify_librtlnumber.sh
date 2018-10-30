@@ -75,7 +75,7 @@ for INPUT in ${0%/*}/regression_tests/*.csv; do
 				TEST_OUTPUT=$(${0%/*}/rtl_number ${test_output_args})
 
 				if 	[ "_$TEST_OUTPUT" != "_" ] &&
-				[ "1'b1" == "$TEST_OUTPUT" ]; then
+				[ "1'sb1" == "$TEST_OUTPUT" ] || [ "1'b1" == "$TEST_OUTPUT" ] ; then
 					echo "--- PASSED == $TEST_LABEL"
 				else
 					FAILURE_COUNT=$((FAILURE_COUNT+1))
