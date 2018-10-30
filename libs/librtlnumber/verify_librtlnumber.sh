@@ -27,6 +27,10 @@ function exit_code() {
 	exit ${my_failed_count}
 }
 
+# TODO: Check if Library 'file' "${0%/*}/librtlnumber.a" exists
+
+# TODO: Check if test harness binary "${0%/*}/rtl_number" exists
+
 # Dynamically load in inputs and results from
 #  file(s) on disk.
 for INPUT in ${0%/*}/regression_tests/*.csv; do
@@ -46,7 +50,6 @@ for INPUT in ${0%/*}/regression_tests/*.csv; do
 		IFS="," read -ra arr <<< ${input_line}
 		len=${#arr[@]}
 
-
 		if 	[ ${len} != "4" ] &&		# unary
 			[ ${len} != "5" ] &&		# binary
 			[ ${len} != "7" ]; then		# ternary
@@ -56,7 +59,6 @@ for INPUT in ${0%/*}/regression_tests/*.csv; do
 
 		TOTAL_TEST_RAN=$(( TOTAL_TEST_RAN+1 ))
 
-
 		#deal with multiplication
 		set -f
 
@@ -65,7 +67,7 @@ for INPUT in ${0%/*}/regression_tests/*.csv; do
 		EXPECTED_RESULT=${arr[$(( len -1 ))]}
 		RTL_CMD_IN=$(printf "%s " "${arr[@]:1:$(( len -2 ))}")
 		OUTPUT_AND_RESULT=$(${0%/*}/rtl_number ${RTL_CMD_IN})
-	
+
 		if [ "pass" == "$(${0%/*}/rtl_number is_true $(${0%/*}/rtl_number ${OUTPUT_AND_RESULT} == ${EXPECTED_RESULT}))" ]
 		then
 			echo "--- PASSED == $TEST_LABEL"
@@ -73,7 +75,7 @@ for INPUT in ${0%/*}/regression_tests/*.csv; do
 			FAILURE_COUNT=$((FAILURE_COUNT+1))
 			echo -e "-X- FAILED == $TEST_LABEL\t  ./rtl_number ${RTL_CMD_IN}\t sOutput:<$OUTPUT_AND_RESULT> != <$EXPECTED_RESULT>"
 		fi
-		
+
 		#unset the multiplication token override
 		unset -f
 
