@@ -27,6 +27,10 @@ function exit_code() {
 	exit ${my_failed_count}
 }
 
+# TODO: Check if Library 'file' "${0%/*}/librtlnumber.a" exists
+
+# TODO: Check if test harness binary "${0%/*}/rtl_number" exists
+
 # Dynamically load in inputs and results from
 #  file(s) on disk.
 for INPUT in ${0%/*}/regression_tests/*.csv; do
@@ -79,11 +83,11 @@ for INPUT in ${0%/*}/regression_tests/*.csv; do
 					echo "--- PASSED == $TEST_LABEL"
 				else
 					FAILURE_COUNT=$((FAILURE_COUNT+1))
-					echo -e "-X- FAILED == $TEST_LABEL\t  ./rtl_number ${RTL_CMD_IN}\t CMP=${TEST_OUTPUT} Output:<$OUTPUT_AND_RESULT> != <$EXPECTED_RESULT>"
+					echo -e "-X- FAILED == $TEST_LABEL\t  ${0%/*}/rtl_number ${RTL_CMD_IN}\t CMP=${TEST_OUTPUT} Output:<$OUTPUT_AND_RESULT> != <$EXPECTED_RESULT>"
 				fi
 		else
 			FAILURE_COUNT=$((FAILURE_COUNT+1))
-			echo -e "-X- FAILED == $TEST_LABEL\t  ./rtl_number ${RTL_CMD_IN}\t  Output:<$OUTPUT_AND_RESULT> != <$EXPECTED_RESULT>"
+			echo -e "-X- FAILED == $TEST_LABEL\t  ${0%/*}/rtl_number ${RTL_CMD_IN}\t  Output:<$OUTPUT_AND_RESULT> != <$EXPECTED_RESULT>"
 		fi
 
 		#unset the multiplication token override
