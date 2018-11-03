@@ -4,6 +4,7 @@
 #include <cstdio>
 
 #include "rtl_int.h"
+#include "rtl_utils.h"
 
 /* Authors: Aaron Graham (aaron.graham@unb.ca, aarongraham9@gmail.com),
  *           Jean-Philippe Legault (jlegault@unb.ca, jeanphilippe.legault@gmail.com) and
@@ -15,10 +16,10 @@
 void start_odin_ii();
 
 #define bad_ops(test) _bad_ops(test, __func__, __LINE__)
-inline static RTL_INT _bad_ops(std::string test, const char *FUNCT, int LINE)	
+inline static std::string _bad_ops(std::string test, const char *FUNCT, int LINE)	
 {	
 	std::cerr << "INVALID INPUT OPS: (" << test << ")@" << FUNCT << "::" << std::to_string(LINE) << std::endl;		
-	return standardize_input("1'bx"); 
+	return "x"; 
 }
 
 
@@ -30,39 +31,13 @@ inline static RTL_INT _bad_ops(std::string test, const char *FUNCT, int LINE)
  * 	This is used for testing purposes only, unused in ODIN as the input is already preprocessed
  */
 
-std::string arithmetic(std::string op, std::string a_in);
-std::string arithmetic(std::string a_in, std::string op, std::string b_in);
-std::string arithmetic(std::string a_in, std::string op1 ,std::string b_in, std::string op2, std::string c_in);
-
-std::string arithmetic(std::string op, std::string a_in)
+static std::string arithmetic(std::string a_in, std::string op, std::string b_in)
 {
-	std::vector<std::string> a = standardize_input(a_in);
-
-	/* return Process Operator via ternary */
-	return	v_bin_string(	(op == "~")		?		V_NEG(a):
-							(op == "-")		?		V_MINUS(a):
-							(op == "+")		?		V_ADD(a):
-							(op == "++")	?		V_PLUS_PLUS(a):
-							(op == "--")	?		V_MINUS_MINUS(a):
-							(op == "&")		?		V_AND(a):
-							(op == "|")		?		V_OR(a):
-							(op == "^")		?		V_XOR(a):
-							(op == "~&")	?		V_NAND(a):
-							(op == "~|")	?		V_NOR(a):
-							(op == "~^"	
-							|| op == "^~")	?		V_XNOR(a):
-							(op == "!")		?		V_LOGICAL_NOT(a):
-													bad_ops(op));
-
-}
-
-std::string arithmetic(std::string a_in, std::string op, std::string b_in)
-{
-	std::vector<std::string> a = standardize_input(a_in);
-	std::vector<std::string> b = standardize_input(b_in);
+	std::string a = verilog_string_to_bitstring(a_in);
+	std::string b = verilog_string_to_bitstring(b_in);
 	
 	/* return Process Operator via ternary */
-	return	v_bin_string(	/*	Reduction Ops	*/
+	return	bitstring_to_verilog_string(	/*	Reduction Ops	*/
 							(op == "&")		?		V_AND(a,b):
 							(op == "|")		?		V_OR(a,b):
 							(op == "^")		?		V_XOR(a,b):
@@ -96,18 +71,6 @@ std::string arithmetic(std::string a_in, std::string op, std::string b_in)
 							(op == "/")		?		V_DIV(a,b):
 							(op == "%")		?		V_MOD(a,b):																																																																																																																																																																																																															
 													bad_ops(op));
-}
-
-std::string arithmetic(std::string a_in, std::string op1 ,std::string b_in, std::string op2, std::string c_in)
-{
-	std::vector<std::string> a = standardize_input(a_in);
-	std::vector<std::string> b = standardize_input(b_in);
-	std::vector<std::string> c = standardize_input(c_in);
-	
-	 /* return Process Operator via ternary */
-	return	v_bin_string(	(op1 != "?")	?	bad_ops(op1):
-							(op2 != ":")	?	bad_ops(op2):
-												V_TERNARY(a,b,c));
 }
 
 void
