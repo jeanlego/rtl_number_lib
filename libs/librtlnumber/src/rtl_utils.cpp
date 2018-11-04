@@ -23,7 +23,7 @@ bool is_dont_care_string(const std::string& input)
 {
     return (input.find(DC_CHR) != std::string::npos);
 }
-bool is_string_of_radix(const std::string& input, uint8_t radix)
+bool is_string_of_radix(const std::string& input, short radix)
 {
 	switch(radix)
 	{
@@ -41,7 +41,12 @@ char _bad_value(const char test, const char *FUNCT, int LINE)
 	return test; 
 }
 
-#define assert_not_dc_string(input) _assert_not_dc_string(input, __func__,__LINE__)
+std::string _bad_value(const std::string& test, const char *FUNCT, int LINE)	
+{	
+	std::cout << "INVALID BIT INPUT: (" << test << ")@" << FUNCT << "::" << std::to_string(LINE) << std::endl;	
+	return test; 
+}
+
 void _assert_not_dc_string(const std::string& input, const char *FUNCT, int LINE)
 {
 	if (is_dont_care_string(input))
@@ -51,8 +56,7 @@ void _assert_not_dc_string(const std::string& input, const char *FUNCT, int LINE
 	}
 }
 
-#define assert_string_of_radix(input, radix) _assert_string_of_radix(input, radix, __func__,__LINE__)
-void _assert_string_of_radix(const std::string& input, uint8_t radix, const char *FUNCT, int LINE)
+void _assert_string_of_radix(const std::string& input, short radix, const char *FUNCT, int LINE)
 {
 	if(!is_string_of_radix(input, radix))
 	{
@@ -61,7 +65,6 @@ void _assert_string_of_radix(const std::string& input, uint8_t radix, const char
 	}
 }
 
-#define assert_bits_len_within_limit(input) _assert_bits_len_within_limit(input, radix, __func__,__LINE__)
 void _assert_bits_len_within_limit(const std::string& input, const char *FUNCT, int LINE)
 {
     if( input.size() >= DEFAULT_BIT_WIDTH )
@@ -71,64 +74,43 @@ void _assert_bits_len_within_limit(const std::string& input, const char *FUNCT, 
 	}
 }
 
-char get_msb(const std::string& input)
-{
-    if(!input.empty())
-        return *input.end();
-    else
-        return '0';
-}
-
-bool is_negative(const std::string& input)
-{
-	return (get_msb(input) == '1');
-}
-
-char get_padding_bit(const std::string& input)
-{
-	return is_negative(input)? '1':'0';
-}
-
-void resize(std::string& bits, std::size_t len)
-{
-
-    bool let_me_go = false;
-	while(bits.size() > 1 && !let_me_go)
-	{
-        std::size_t current_bit_width = bits.length();
-        if(len <= 0)
-        {
-            if(*(bits.end()) == *(bits.end()-1))
-                bits.pop_back();
-            else
-                let_me_go = true;
-        }
-        else if(len > current_bit_width)
-        {
-            bits.push_back(get_padding_bit(bits));
-        }
-        else if(len < current_bit_width)
-        {
-            bits.pop_back();
-        }
-        else if(len == current_bit_width)
-        {
-            let_me_go = true;
-        }
-	}
-}
-
-int64_t _v_strtoul(const std::string& input, uint8_t radix, const char *FUNCT, int LINE)
+INT_TYPE _str_to_int(const std::string& input, short radix, const char *FUNCT, int LINE)
 {
     _assert_not_dc_string(input, FUNCT, LINE);
 	_assert_string_of_radix(input, radix, FUNCT, LINE);
     _assert_bits_len_within_limit(input,FUNCT, LINE);
 	
-	return std::strtoul(input.c_str(),NULL,radix);
+	return std::strtoll(input.c_str(),NULL,radix);
+}
+
+
+
+#define bits_to_hex(sub_str) _bits_to_hex(sub_str,__func__, __LINE__)
+char _bits_to_hex(std::string revers, const char *FUNCT, int LINE)
+{
+    if     ( revers == "0000" )	 return '0'; 
+    else if( revers == "0001" )	 return '1'; 
+    else if( revers == "0010" )	 return '2'; 
+    else if( revers == "0011" )	 return '3'; 
+    else if( revers == "0100" )	 return '4'; 
+    else if( revers == "0101" )	 return '5'; 
+    else if( revers == "0110" )	 return '6'; 
+    else if( revers == "0111" )	 return '7'; 
+    else if( revers == "1000" )	 return '8'; 
+    else if( revers == "1001" )	 return '9'; 
+    else if( revers == "1010" )	 return 'a'; 
+    else if( revers == "1011" )	 return 'b'; 
+    else if( revers == "1100" )	 return 'c'; 
+    else if( revers == "1101" )	 return 'd'; 
+    else if( revers == "1110" )	 return 'e'; 
+    else if( revers == "1111" )	 return 'f'; 
+    else if( revers == "xxxx" )	 return 'x'; 
+    else if( revers == "zzzz" )	 return 'z'; 
+    else                         _bad_value(revers, FUNCT, LINE);
 }
 
 #define radix_digit_to_bits_str(num,radix) _radix_digit_to_bits_str(num,radix,__func__, __LINE__)
-inline static std::string _radix_digit_to_bits_str(const char digit, uint8_t radix,  const char *FUNCT, int LINE)
+inline static std::string _radix_digit_to_bits_str(const char digit, short radix,  const char *FUNCT, int LINE)
 {
     switch(radix)
     {
@@ -205,7 +187,7 @@ inline static std::string _radix_digit_to_bits_str(const char digit, uint8_t rad
 }
 
 #define radix_digit_to_bits(num,radix) _radix_digit_to_bits(num,radix,__func__, __LINE__)
-inline static std::string _radix_digit_to_bits(const char digit, uint8_t radix,  const char *FUNCT, int LINE)
+inline static std::string _radix_digit_to_bits(const char digit, short radix,  const char *FUNCT, int LINE)
 {
     std::string result = _radix_digit_to_bits_str(digit, radix, FUNCT, LINE);
     return std::string(result.crbegin(), result.crend());
@@ -215,7 +197,7 @@ inline static std::string _radix_digit_to_bits(const char digit, uint8_t radix, 
 /**********************
  * convert from and to internal representation bitstring
  */
-std::string string_of_radix_to_bitstring(std::string orig_string, std::size_t radix)
+std::string string_of_radix_to_bitstring(std::string orig_string, short radix)
 {
 	
 	std::string result = "";	
@@ -246,7 +228,6 @@ std::string string_of_radix_to_bitstring(std::string orig_string, std::size_t ra
 			}
 			default:
 			{
-                std::string big_endian_str = radix_digit_to_bits(orig_string.back(), radix);
                 result += radix_digit_to_bits(orig_string.back(), radix);
                 orig_string.pop_back();
                 break;
@@ -261,23 +242,23 @@ std::string verilog_string_to_bitstring(std::string input_number)
 	//remove underscores
 	input_number.erase(std::remove(input_number.begin(), input_number.end(), '_'), input_number.end());
 
-	std::size_t loc = input_number.find("\'");
+	int loc = input_number.find("\'");
 	if(loc == std::string::npos)
 	{
 		input_number.insert(0, "\'d");
 		loc = 0;
 	}
 
-	std::size_t len = 0;
+	INT_TYPE len = 0;
 	if(loc != 0)
-		len = v_strtoul(input_number.substr(0,loc),10);
+		len = dec_str_to_int(input_number.substr(0,loc));
 
 	bool sign = false;
 	if(std::tolower(input_number[loc+1]) == 's')
 		sign = true;
 
     char base = std::tolower(input_number[loc+1+sign]);
-    uint8_t radix = (base == 'b') ? 2   :
+    short radix = (base == 'b') ? 2   :
                     (base == 'o') ? 8   :
                     (base == 'd') ? 10  :
                     (base == 'h') ? 16  :
@@ -292,7 +273,7 @@ std::string verilog_string_to_bitstring(std::string input_number)
 
     resize(result, len);
 
-    //increase length by 3 this allows us to store sign properly
+    // pad an extra zero to assure non negative number
     if(!sign)
         result.push_back('0');
     else
@@ -304,10 +285,33 @@ std::string verilog_string_to_bitstring(std::string input_number)
 // convert lsb_msb bitstring to verilog
 std::string bitstring_to_verilog_string(std::string origstring)
 {
-    std::string out(origstring.crbegin(), origstring.crend());
+    //final resize to verify length of output.
+    resize(origstring,0);
+    std::string out = "";
+    int len = 0;
+    //print in hex
+    if(false)
+    {
+        std::string out = "";
+        for(int i =0; i< origstring.size(); i+=4)
+        {
+            std::string bits_to_hex = origstring.substr(i,4);
+            if (bits_to_hex.size() < 4)
+                bits_to_hex += std::string(4-bits_to_hex.size(), get_padding_bit(origstring));
+            
+            out.insert(0,1,bits_to_hex(std::string(bits_to_hex.crbegin(), bits_to_hex.crend())));
+        }
+        len = out.size() * 4;
+    }
+    else
+    {
+        out = std::string(origstring.crbegin(), origstring.crend());
+        len = out.size();
+
+    }
 
 	return std::string(
-        std::to_string(out.size()) 
+        std::to_string(len) 
         + "\'sb" 
         + out
     );

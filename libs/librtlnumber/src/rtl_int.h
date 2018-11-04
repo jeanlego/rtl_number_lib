@@ -1,63 +1,41 @@
-/* Authors: Aaron Graham (aaron.graham@unb.ca, aarongraham9@gmail.com),
- *           Jean-Philippe Legault (jlegault@unb.ca, jeanphilippe.legault@gmail.com) and
- *            Dr. Kenneth B. Kent (ken@unb.ca)
- *            for the Reconfigurable Computing Research Lab at the
- *             Univerity of New Brunswick in Fredericton, New Brunswick, Canada
- */
-
 #ifndef RTL_INT_H
 #define RTL_INT_H
 
-#include <vector>
 #include <string>
-
-/* Authors: Aaron Graham (aaron.graham@unb.ca, aarongraham9@gmail.com),
- *           Jean-Philippe Legault (jlegault@unb.ca, jeanphilippe.legault@gmail.com) and
- *           Dr. Kenneth B. Kent (ken@unb.ca)
- *           for the Reconfigurable Computing Research Lab at the
- *           Univerity of New Brunswick in Fredericton, New Brunswick, Canada
- */
 
 /**
  * Unary Operator
  */
-std::string  V_NEG(const std::string& a);
-std::string  V_PLUS_PLUS(const std::string& a);
-std::string   V_MINUS_MINUS(const std::string& a);
+
+bool V_TRUE(const std::string& a);
+
 std::string  V_ADD(const std::string& a);
 std::string  V_MINUS(const std::string& a);
 
-std::string  V_AND(const std::string& a);
-std::string  V_OR(const std::string& a);
-std::string  V_XOR(const std::string& a);
-std::string  V_NAND(const std::string& a);
-std::string  V_NOR(const std::string& a);
-std::string  V_XNOR(const std::string& a);
+std::string  V_BITWISE_NOT(const std::string& a);
+std::string  V_BITWISE_AND(const std::string& a);
+std::string  V_BITWISE_OR(const std::string& a);
+std::string  V_BITWISE_XOR(const std::string& a);
+std::string  V_BITWISE_NAND(const std::string& a);
+std::string  V_BITWISE_NOR(const std::string& a);
+std::string  V_BITWISE_XNOR(const std::string& a);
 
 std::string  V_LOGICAL_NOT(const std::string& a);
 
 /**
  * Binary Operator
  */
-std::string  V_AND(const std::string& a,const std::string& b);
-std::string  V_OR(const std::string& a,const std::string& b);
-std::string  V_XOR(const std::string& a,const std::string& b);
-std::string  V_NAND(const std::string& a,const std::string& b);
-std::string  V_NOR(const std::string& a,const std::string& b);
-std::string  V_XNOR(const std::string& a,const std::string& b);
+std::string  V_BITWISE_AND(const std::string& a,const std::string& b);
+std::string  V_BITWISE_OR(const std::string& a,const std::string& b);
+std::string  V_BITWISE_XOR(const std::string& a,const std::string& b);
+std::string  V_BITWISE_NAND(const std::string& a,const std::string& b);
+std::string  V_BITWISE_NOR(const std::string& a,const std::string& b);
+std::string  V_BITWISE_XNOR(const std::string& a,const std::string& b);
 
-std::string  V_CASE_EQUAL(const std::string& a,const std::string& b);
-std::string  V_CASE_NOT_EQUAL(const std::string& a,const std::string& b);
-
-std::string  V_SIGNED_SHIFT_LEFT(const std::string& a, std::size_t b);
 std::string  V_SIGNED_SHIFT_LEFT(const std::string& a, const std::string& b);
-std::string  V_SIGNED_SHIFT_RIGHT(const std::string& a, std::size_t b);
 std::string  V_SIGNED_SHIFT_RIGHT(const std::string& a, const std::string& b);
-std::string  V_SHIFT_LEFT(const std::string& a, std::size_t b);
 std::string  V_SHIFT_LEFT(const std::string& a, const std::string& b);
-std::string  V_SHIFT_RIGHT(const std::string& a, std::size_t b);
 std::string  V_SHIFT_RIGHT(const std::string& a, const std::string& b);
-
 
 std::string  V_LOGICAL_AND(const std::string& a,const std::string& b);
 std::string  V_LOGICAL_OR(const std::string& a,const std::string& b);
@@ -68,6 +46,8 @@ std::string  V_LE(const std::string& a,const std::string& b);
 std::string  V_GE(const std::string& a,const std::string& b);
 std::string  V_EQUAL(const std::string& a,const std::string& b);
 std::string  V_NOT_EQUAL(const std::string& a,const std::string& b);
+std::string  V_CASE_EQUAL(const std::string& a,const std::string& b);
+std::string  V_CASE_NOT_EQUAL(const std::string& a,const std::string& b);
 
 std::string  V_ADD(const std::string& a,const std::string& b);
 std::string  V_MINUS(const std::string& a,const std::string& b);

@@ -10,10 +10,6 @@
 Sign_minus,		        -,  4'b1010,	'b0110
 Sign_plus,			    +,  4'b1010,	'b1010
 
-# Increment
-Increment,		        ++,	4'b1010,	'b1011
-Decrement,		        --,	4'b1010,	'b1001
-
 # Reduction
 Reduction-and,			&,  4'b1010,	0
 Reduction-or,			|,  4'b1010,	1
@@ -24,12 +20,12 @@ Reduction-xnor,			~^,	4'b1010,	1
 
 # bitwise
 Bitwise-Not,	            ~,  4'b1010,	'b101
-Bitwise-And,	4'b1010,	&,  4'b1000,	'b1000
-Bitwise-Or,		4'b1010,	|,  4'b1000,	'b1010
-Bitwise-Nor,	4'b1010,	~|, 4'b1000,	5
-Bitwise-Nand,   4'b1010,	~&, 4'b1000,	7
-Bitwise-Xnor,   4'b1010,	~^, 4'b1000,	4'b1101
-Bitwise-Xor,	4'b1010,	^,  4'b1000,	2
+Bitwise-And,	5'b1010,	&,  5'b1000,	'b1000
+Bitwise-Or,		5'b1010,	|,  5'b1000,	'b1010
+Bitwise-Nor,	5'b1010,	~|, 5'b1000,	5
+Bitwise-Nand,   5'b1010,	~&, 5'b1000,	7
+Bitwise-Xnor,   5'b1010,	~^, 5'b1000,	4'b1101
+Bitwise-Xor,	5'b1010,	^,  5'b1000,	2
 
 # case equivalence
 Case-eq,		4'b1x10,	===,  4'b1x10,	1

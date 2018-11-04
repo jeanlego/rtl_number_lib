@@ -54,38 +54,26 @@ for INPUT in ${0%/*}/regression_tests/*.csv; do
 				continue
 		fi
 
-		TEST_LABEL=${arr[0]}
-		EXPECTED_RESULT=${arr[$(( len -1 ))]}
-		# everything between is the operation to pipe in so we slice the array and concatenate with space
+		TOTAL_TEST_RAN=$(( TOTAL_TEST_RAN+1 ))
+
 
 		#deal with multiplication
 		set -f
-		RTL_CMD_IN=$(printf "%s " "${arr[@]:1:$(( len -2 ))}")	
-		
 
-		TOTAL_TEST_RAN=$(( TOTAL_TEST_RAN+1 ))
+		# everything between is the operation to pipe in so we slice the array and concatenate with space
+		TEST_LABEL=${arr[0]}
+		EXPECTED_RESULT=${arr[$(( len -1 ))]}
+		RTL_CMD_IN=$(printf "%s " "${arr[@]:1:$(( len -2 ))}")
 		OUTPUT_AND_RESULT=$(${0%/*}/rtl_number ${RTL_CMD_IN})
-
-		# Parse out any ERRORS from OUTPUT_AND_RESULT
-		#  and handle accordingly
-		if 	[ "_$OUTPUT_AND_RESULT" != "_" ] &&
-			[ "_" == "_$(echo $OUTPUT_AND_RESULT | grep ERROR)" ]; then
-
-				test_output_args="${OUTPUT_AND_RESULT} === ${EXPECTED_RESULT}"
-				TEST_OUTPUT=$(${0%/*}/rtl_number ${test_output_args})
-
-				if 	[ "_$TEST_OUTPUT" != "_" ] &&
-				[ "1'sb1" == "$TEST_OUTPUT" ] || [ "1'b1" == "$TEST_OUTPUT" ] ; then
-					echo "--- PASSED == $TEST_LABEL"
-				else
-					FAILURE_COUNT=$((FAILURE_COUNT+1))
-					echo -e "-X- FAILED == $TEST_LABEL\t  ./rtl_number ${RTL_CMD_IN}\t CMP=${TEST_OUTPUT} Output:<$OUTPUT_AND_RESULT> != <$EXPECTED_RESULT>"
-				fi
+	
+		if [ "pass" == "$(${0%/*}/rtl_number is_true $(${0%/*}/rtl_number ${OUTPUT_AND_RESULT} == ${EXPECTED_RESULT}))" ]
+		then
+			echo "--- PASSED == $TEST_LABEL"
 		else
 			FAILURE_COUNT=$((FAILURE_COUNT+1))
-			echo -e "-X- FAILED == $TEST_LABEL\t  ./rtl_number ${RTL_CMD_IN}\t  Output:<$OUTPUT_AND_RESULT> != <$EXPECTED_RESULT>"
+			echo -e "-X- FAILED == $TEST_LABEL\t  ./rtl_number ${RTL_CMD_IN}\t sOutput:<$OUTPUT_AND_RESULT> != <$EXPECTED_RESULT>"
 		fi
-
+		
 		#unset the multiplication token override
 		unset -f
 

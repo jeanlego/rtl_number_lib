@@ -16,7 +16,8 @@
 #define bad_ops(test) _bad_ops(test, __func__, __LINE__)
 inline static std::string _bad_ops(std::string test, const char *FUNCT, int LINE)	
 {	
-	std::cerr << "INVALID INPUT OPS: (" << test << ")@" << FUNCT << "::" << std::to_string(LINE) << std::endl;		
+	std::cerr << "INVALID INPUT OPS: (" << test << ")@" << FUNCT << "::" << std::to_string(LINE) << std::endl;	
+	std::abort();	
 	return "x"; 
 }
 
@@ -35,18 +36,16 @@ static std::string arithmetic(std::string op, std::string a_in)
 	
 	/* return Process Operator via ternary */
 	return	bitstring_to_verilog_string(
-							(op == "~")		?		V_NEG(a):
+							(op == "~")		?		V_BITWISE_NOT(a):
 							(op == "-")		?		V_MINUS(a):
 							(op == "+")		?		V_ADD(a):
-							(op == "++")	?		V_PLUS_PLUS(a):
-							(op == "--")	?		V_MINUS_MINUS(a):
-							(op == "&")		?		V_AND(a):
-							(op == "|")		?		V_OR(a):
-							(op == "^")		?		V_XOR(a):
-							(op == "~&")	?		V_NAND(a):
-							(op == "~|")	?		V_NOR(a):
+							(op == "&")		?		V_BITWISE_AND(a):
+							(op == "|")		?		V_BITWISE_OR(a):
+							(op == "^")		?		V_BITWISE_XOR(a):
+							(op == "~&")	?		V_BITWISE_NAND(a):
+							(op == "~|")	?		V_BITWISE_NOR(a):
 							(op == "~^"	
-							|| op == "^~")	?		V_XNOR(a):
+							|| op == "^~")	?		V_BITWISE_XNOR(a):
 							(op == "!")		?		V_LOGICAL_NOT(a):
 													bad_ops(op));
 
@@ -59,13 +58,13 @@ static std::string arithmetic(std::string a_in, std::string op, std::string b_in
 	
 	/* return Process Operator via ternary */
 	return	bitstring_to_verilog_string(	/*	Reduction Ops	*/
-							(op == "&")		?		V_AND(a,b):
-							(op == "|")		?		V_OR(a,b):
-							(op == "^")		?		V_XOR(a,b):
-							(op == "~&")	?		V_NAND(a,b):
-							(op == "~|")	?		V_NOR(a,b):
+							(op == "&")		?		V_BITWISE_AND(a,b):
+							(op == "|")		?		V_BITWISE_OR(a,b):
+							(op == "^")		?		V_BITWISE_XOR(a,b):
+							(op == "~&")	?		V_BITWISE_NAND(a,b):
+							(op == "~|")	?		V_BITWISE_NOR(a,b):
 							(op == "~^"	
-							|| op == "~^")	?		V_XNOR(a,b):
+							|| op == "~^")	?		V_BITWISE_XNOR(a,b):
 							/*	Case test	*/
 							(op == "===" )	?		V_CASE_EQUAL(a,b):
 							(op == "!==")	?		V_CASE_NOT_EQUAL(a,b):
@@ -111,10 +110,15 @@ int main(int argc, char** argv)
 	std::vector<std::string> input;
 	for(int i=0; i < argc; i++)		input.push_back(argv[i]);
 
-	if		(argc == 3)	std::cout << arithmetic(input[1], input[2]) << std::endl;
+	if(argc == 3 && input[1] == "is_true")	std::cout << (V_TRUE(verilog_string_to_bitstring(input[2]))?"pass":"fail") << std::endl;
+	else if		(argc == 3)	std::cout << arithmetic(input[1], input[2]) << std::endl;
 	else if	(argc == 4)	std::cout << arithmetic(input[1], input[2], input[3]) << std::endl;
 	else if (argc == 6)	std::cout << arithmetic(input[1], input[2], input[3], input[4], input[5]) << std::endl;
-	else				std::cout << "ERROR: Too Many Arguments: " << std::to_string(argc - 1) << "!" << std::endl;
+	else				
+	{
+		std::cout << "ERROR: Too Many Arguments: " << std::to_string(argc - 1) << "!" << std::endl;
+		return -1;
+	}
 
 	return 0;
 }
