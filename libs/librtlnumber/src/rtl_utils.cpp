@@ -1,7 +1,13 @@
+/* Authors: Aaron Graham (aaron.graham@unb.ca, aarongraham9@gmail.com),
+ *           Jean-Philippe Legault (jlegault@unb.ca, jeanphilippe.legault@gmail.com) and
+ *            Dr. Kenneth B. Kent (ken@unb.ca)
+ *            for the Reconfigurable Computing Research Lab at the
+ *             Univerity of New Brunswick in Fredericton, New Brunswick, Canada
+ */
+
 #include "rtl_utils.h"
 #include <algorithm>
 #include <iostream>
-
 
 // this sets the default bit width
 
@@ -82,8 +88,6 @@ INT_TYPE _str_to_int(const std::string& input, short radix, const char *FUNCT, i
 	
 	return std::strtoll(input.c_str(),NULL,radix);
 }
-
-
 
 #define bits_to_hex(sub_str) _bits_to_hex(sub_str,__func__, __LINE__)
 char _bits_to_hex(std::string revers, const char *FUNCT, int LINE)
@@ -192,7 +196,6 @@ inline static std::string _radix_digit_to_bits(const char digit, short radix,  c
     std::string result = _radix_digit_to_bits_str(digit, radix, FUNCT, LINE);
     return std::string(result.crbegin(), result.crend());
 }
-
 
 /**********************
  * convert from and to internal representation bitstring

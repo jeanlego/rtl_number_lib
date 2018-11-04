@@ -21,7 +21,6 @@ inline static std::string _bad_ops(std::string test, const char *FUNCT, int LINE
 	return "x"; 
 }
 
-
 /***
  *     __   __       ___  __   __           ___       __       
  *    /  ` /  \ |\ |  |  |__) /  \ |       |__  |    /  \ |  | 
