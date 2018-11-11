@@ -21,13 +21,16 @@ INT_TYPE _str_to_int(const std::string& input, short radix, const char *FUNCT, i
 /**
  * convert between internal bitstring to verilog string and back (to conversion is LSB to MSB)
  */
-std::string verilog_string_to_bitstring(std::string orig_string);
-std::string bitstring_to_verilog_string(std::string origstring);
+/* TODO: Remove. */std::string verilog_string_to_bitstring(std::string orig_string);
+/* TODO: Remove. */std::string bitstring_to_verilog_string(std::string origstring);
 
 std::string string_of_radix_to_bitstring(std::string orig_string, short radix);
 
 bool is_dont_care_string(const std::string& input);
 bool is_string_of_radix(const std::string& input, short radix);
+
+#define bits_to_hex(sub_str) _bits_to_hex(sub_str,__func__, __LINE__)
+char _bits_to_hex(std::string revers, const char *FUNCT, int LINE);
 
 #define bad_value(test) _bad_value(test,  __func__, __LINE__)
 char _bad_value(const char test, const char *FUNCT, int LINE);

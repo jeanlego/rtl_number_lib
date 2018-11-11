@@ -89,7 +89,6 @@ INT_TYPE _str_to_int(const std::string& input, short radix, const char *FUNCT, i
 	return std::strtoll(input.c_str(),NULL,radix);
 }
 
-#define bits_to_hex(sub_str) _bits_to_hex(sub_str,__func__, __LINE__)
 char _bits_to_hex(std::string revers, const char *FUNCT, int LINE)
 {
     if     ( revers == "0000" )	 return '0'; 

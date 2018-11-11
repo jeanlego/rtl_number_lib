@@ -25,12 +25,14 @@ public:
     void set_value(INT_TYPE input);
 
     //get a single bit from bitstring 
-    char bits_from_msb(int index);
-    char bits_from_lsb(int index);
+    char bits_from_msb(INT_TYPE index);
+    char bits_from_lsb(INT_TYPE index);
 
     bool is_negative();
     char get_padding_bit();
-    void resize(int len);
+    void resize(INT_TYPE len);
+
+    std::string to_bitstring();
 
 private:
 

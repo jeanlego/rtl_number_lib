@@ -5,6 +5,9 @@
  *             Univerity of New Brunswick in Fredericton, New Brunswick, Canada
  */
 
+#include <algorithm>
+#include <string>
+#include "rtl_utils.h"
 #include "v_number.h"
 
 v_number::v_number(std::string verilog_string)
@@ -12,7 +15,7 @@ v_number::v_number(std::string verilog_string)
     //remove underscores
 	verilog_string.erase(std::remove(verilog_string.begin(), verilog_string.end(), '_'), verilog_string.end());
 
-	int loc = verilog_string.find("\'");
+	INT_TYPE loc = verilog_string.find("\'");
 	if(loc == std::string::npos)
 	{
 		verilog_string.insert(0, "\'d");
@@ -28,7 +31,7 @@ v_number::v_number(std::string verilog_string)
 		this->sign = true;
 
     char base = std::tolower(verilog_string[loc+1+sign]);
-    short radix = (base == 'b') ? 2   :
+    INT_TYPE radix = (base == 'b') ? 2   :
                     (base == 'o') ? 8   :
                     (base == 'd') ? 10  :
                     (base == 'h') ? 16  :
@@ -37,7 +40,7 @@ v_number::v_number(std::string verilog_string)
 	this->bitstring = string_of_radix_to_bitstring(verilog_string.substr(loc+2+sign), radix);
     //truncate the excess bits (unecessary padding or outside of defined length)
 
-    resize(this->bitstring, this->length);
+    this->resize(this->length);
 }
 
 INT_TYPE v_number::get_value()
@@ -50,7 +53,7 @@ void value(INT_TYPE)
 
 }
 
-char v_number::bits_from_msb(int index)
+char v_number::bits_from_msb(INT_TYPE index)
 {
     if(index < this->bitstring.size() )
         return *(this->bitstring.end()-index);
@@ -58,7 +61,7 @@ char v_number::bits_from_msb(int index)
     return 0;
 }
 
-char v_number::bits_from_lsb(int index)
+char v_number::bits_from_lsb(INT_TYPE index)
 {
     if(index < this->bitstring.size() )
         return *(this->bitstring.begin()+index);
@@ -76,7 +79,7 @@ char v_number::get_padding_bit()
     return this->is_negative()? '1':'0';
 }
 
-void v_number::resize(int len)
+void v_number::resize(INT_TYPE len)
 {
     while(this->bitstring.length() > 1)
     {
@@ -106,26 +109,26 @@ void v_number::resize(int len)
 std::string v_number::to_bitstring()
 {
     //final resize to verify length of output.
-    resize(origstring,0);
+    this->resize(0);
     std::string out = "";
-    int len = 0;
+    INT_TYPE len = 0;
     //print in hex
     if(false)
     {
         std::string out = "";
-        for(int i =0; i< origstring.size(); i+=4)
+        for(int i = 0; i< this->bitstring.size(); i+=4)
         {
-            std::string bits_to_hex = origstring.substr(i,4);
-            if (bits_to_hex.size() < 4)
-                bits_to_hex += std::string(4-bits_to_hex.size(), get_padding_bit(origstring));
+            std::string bits_to_hex_str = this->bitstring.substr(i,4);
+            if (bits_to_hex_str.size() < 4)
+                bits_to_hex_str += std::string(4-bits_to_hex_str.size(), this->get_padding_bit());
             
-            out.insert(0,1,bits_to_hex(std::string(bits_to_hex.crbegin(), bits_to_hex.crend())));
+            out.insert(0,1,bits_to_hex(std::string(bits_to_hex_str.crbegin(), bits_to_hex_str.crend())));
         }
         len = out.size() * 4;
     }
     else
     {
-        out = std::string(origstring.crbegin(), origstring.crend());
+        out = std::string(this->bitstring.crbegin(), this->bitstring.crend());
         len = out.size();
 
     }
