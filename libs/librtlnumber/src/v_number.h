@@ -19,6 +19,8 @@ public:
     //copy another number over
     v_number(v_number& other);
 
+    void value(INT_TYPE);
+
     INT_TYPE get_value();
     void set_value(INT_TYPE input);
 
@@ -34,4 +36,5 @@ private:
 
     bool sign;
     std::string bitstring;
+    INT_TYPE length;
 };

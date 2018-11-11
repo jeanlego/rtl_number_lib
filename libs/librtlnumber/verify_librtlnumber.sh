@@ -27,21 +27,23 @@ function exit_code() {
 	exit ${my_failed_count}
 }
 
-# TODO: Check if Library 'file' "${0%/*}/librtlnumber.a" exists
+# Check if Library 'file' "${0%/*}/librtlnumber.a" exists
+[ ! -f ${0%/*}/librtlnumber.a ] && exit_code 99 "${0%/*}/librtlnumber.a library file not found!\n"
 
-# TODO: Check if test harness binary "${0%/*}/rtl_number" exists
+# Check if test harness binary "${0%/*}/rtl_number" exists
+[ ! -f ${0%/*}/rtl_number ] && exit_code 99 "${0%/*}/rtl_number test harness file not found!\n" 
 
 # Dynamically load in inputs and results from
 #  file(s) on disk.
 for INPUT in ${0%/*}/regression_tests/*.csv; do
-	[ ! -f $INPUT ] && exit_code 99 "$INPUT file not found\n" 
+	[ ! -f $INPUT ] && exit_code 99 "$INPUT regression test file not found!\n"
 
 	echo "Running Test File: $INPUT:"
 
 	while IFS= read -r input_line; do
 
 		#glob whitespace from line and remove everything after comment
-		input_line=$(echo ${input_line} | tr -d '[:space:]' | cut -d '#' -f1) 
+		input_line=$(echo ${input_line} | tr -d '[:space:]' | cut -d '#' -f1)
 
 		#skip empty lines
 		[  "_" ==  "_${input_line}" ] && continue

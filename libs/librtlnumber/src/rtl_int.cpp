@@ -10,6 +10,7 @@
 #include "rtl_int.h"
 #include "rtl_utils.h"
 #include "rtl_primitive.h"
+#include "v_number.h"
 
 /**
  * Compare operations
@@ -24,9 +25,9 @@ typedef enum
 
 inline static EVAL_RESULT eval_op(const std::string& a_in, const std::string& b_in)
 {
-	bool neg_a = (is_negative(a_in));
-	bool neg_b = (is_negative(b_in));
-	
+	bool neg_a = ((/* TOOD: Pass in v_number */new v_number(a_in)).is_negative());
+	bool neg_b = ((/* TOOD: Pass in v_number */new v_number(b_in)).is_negative());
+
 	std::string a;
 	if(neg_a)	a = V_MINUS(a_in);
 	else		a = V_ADD(a_in);
@@ -34,7 +35,6 @@ inline static EVAL_RESULT eval_op(const std::string& a_in, const std::string& b_
 	std::string b;
 	if(neg_b)	b = V_MINUS(b_in);
 	else		b = V_ADD(b_in);
-
 
 	bool invert_result = ((!neg_a && neg_b) || (neg_a && !neg_b));
 
@@ -72,6 +72,7 @@ inline static EVAL_RESULT eval_op(long a, const std::string& b)
 	std::string BEbits(bits_value.crbegin(),bits_value.crend());
 	return eval_op(BEbits,b);
 }
+
 inline static EVAL_RESULT eval_op(const std::string& a,long b)
 {
 	std::string bits_value = string_of_radix_to_bitstring(std::to_string(b), 10);
