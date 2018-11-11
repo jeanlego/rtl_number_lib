@@ -25,11 +25,11 @@ typedef enum
 
 inline static EVAL_RESULT eval_op(const std::string& a_in, const std::string& b_in)
 {
-	/* TODO: Pass in v_number */v_number* v_number_a = new v_number(a_in);
-	/* TODO: Pass in v_number */v_number* v_number_b = new v_number(b_in);
+	/* TODO: Pass in v_number */v_number v_number_a(a_in);
+	/* TODO: Pass in v_number */v_number v_number_b(b_in);
 
-	bool neg_a = (v_number_a->is_negative());
-	bool neg_b = (v_number_b->is_negative());
+	bool neg_a = (v_number_a.is_negative());
+	bool neg_b = (v_number_b.is_negative());
 
 	std::string a;
 	if(neg_a)	a = V_MINUS(a_in);
@@ -42,10 +42,10 @@ inline static EVAL_RESULT eval_op(const std::string& a_in, const std::string& b_
 	bool invert_result = ((!neg_a && neg_b) || (neg_a && !neg_b));
 
 	int std_length = std::max(a.size(), b.size());
-	/* TODO: Use Same v_number as above */v_number* v_number_a_pad = new v_number(a);
-	/* TODO: Use Same v_number as above */v_number* v_number_b_pad = new v_number(b);
-	const char pad_a = v_number_a_pad->get_padding_bit();
-	const char pad_b = v_number_b_pad->get_padding_bit();
+	/* TODO: Use Same v_number as above */v_number v_number_a_pad(a);
+	/* TODO: Use Same v_number as above */v_number v_number_b_pad(b);
+	const char pad_a = v_number_a_pad.get_padding_bit();
+	const char pad_b = v_number_b_pad.get_padding_bit();
 
 	std::string result = "";
 
@@ -116,10 +116,10 @@ inline static void inline_redux_op(std::string& a, const char lut[4][4])
 inline static std::string redux_op(const std::string& a, const std::string& b, const char lut[4][4])
 {
 	int std_length = std::max(a.size(), b.size());
-	/* TODO: Pass in v_number */v_number* v_number_a = new v_number(a);
-	/* TODO: Pass in v_number */v_number* v_number_b = new v_number(b);
-	const char pad_a = v_number_a->get_padding_bit();
-	const char pad_b = v_number_b->get_padding_bit();
+	/* TODO: Pass in v_number */v_number v_number_a(a);
+	/* TODO: Pass in v_number */v_number v_number_b(b);
+	const char pad_a = v_number_a.get_padding_bit();
+	const char pad_b = v_number_b.get_padding_bit();
 
 	std::string result = "";
 
@@ -145,10 +145,10 @@ inline static std::string redux_op(const std::string& a, const std::string& b, c
 inline static std::string sum_op(const std::string& a, const std::string& b, const char initial_carry)
 {
 	int std_length = std::max(a.size(), b.size());
-	/* TODO: Pass in v_number */v_number* v_number_a = new v_number(a);
-	/* TODO: Pass in v_number */v_number* v_number_b = new v_number(b);
-	const char pad_a = v_number_a->get_padding_bit();
-	const char pad_b = v_number_b->get_padding_bit();
+	/* TODO: Pass in v_number */v_number v_number_a(a);
+	/* TODO: Pass in v_number */v_number v_number_b(b);
+	const char pad_a = v_number_a.get_padding_bit();
+	const char pad_b = v_number_b.get_padding_bit();
 
 	char previous_carry = initial_carry;
 	std::string result = "";
@@ -174,7 +174,7 @@ inline static std::string sum_op(const std::string& a, const std::string& b, con
 /**
  * Shift operations
  */
-inline static void shift_op(std::string& bit_string, INT_TYPE len, signed char padding_bit)
+inline static void shift_op(std::string& bit_string, long long len, signed char padding_bit)
 {
 	std::string pad(std::abs(len),padding_bit);
 	//shift left , let it grow, let it grow ...
@@ -316,10 +316,10 @@ std::string V_BITWISE_XNOR(const std::string& a,const std::string& b)
 std::string V_CASE_EQUAL(const std::string& a,const std::string& b)
 {
 	int std_length = std::max(a.size(), b.size());
-	/* TODO: Pass in v_number */v_number* v_number_a = new v_number(a);
-	/* TODO: Pass in v_number */v_number* v_number_b = new v_number(b);
-	char last_a = v_number_a->get_padding_bit();
-	char last_b = v_number_b->get_padding_bit(); 
+	/* TODO: Pass in v_number */v_number v_number_a(a);
+	/* TODO: Pass in v_number */v_number v_number_b(b);
+	char last_a = v_number_a.get_padding_bit();
+	char last_b = v_number_b.get_padding_bit(); 
 
 	for (int i=0; i<std_length; i++)
 	{
@@ -366,10 +366,10 @@ std::string V_SIGNED_SHIFT_RIGHT(const std::string& a_in, const std::string& b)
 	std::string value(b.crbegin(), b.crend());
 	std::string a(a_in);
 
-	/* TODO: Pass in v_number */v_number* v_number_a = new v_number(a);
-	// /* TODO: Pass in v_number */v_number* v_number_b = new v_number(b);
+	/* TODO: Pass in v_number */v_number v_number_a(a);
+	// /* TODO: Pass in v_number */v_number v_number_b(b);
 
-	shift_op(a, -1 * bits_str_to_int(value), v_number_a->get_padding_bit());
+	shift_op(a, -1 * bits_str_to_int(value), v_number_a.get_padding_bit());
 	return a;
 }
 
@@ -478,11 +478,11 @@ std::string V_MULTIPLY(const std::string& a_in, const std::string& b_in)
 	std::string a;
 	std::string b;
 
-	/* TODO: Pass in v_number */v_number* v_number_a = new v_number(a_in);
-	/* TODO: Pass in v_number */v_number* v_number_b = new v_number(b_in);
+	/* TODO: Pass in v_number */v_number v_number_a(a_in);
+	/* TODO: Pass in v_number */v_number v_number_b(b_in);
 
-	bool neg_a = v_number_a->is_negative();
-	bool neg_b = v_number_b->is_negative();
+	bool neg_a = v_number_a.is_negative();
+	bool neg_b = v_number_b.is_negative();
 	
 	if(neg_a)	
 		a = V_MINUS(a_in);
@@ -528,8 +528,8 @@ std::string V_POWER(const std::string& a,const std::string& b)
 					(res_b == LESS_THAN) 		? 	-1:
 					/* GREATHER_THAN */				1;
 
-	/* TODO: Pass in v_number */v_number* v_number_a = new v_number(a);
-	// /* TODO: Pass in v_number */v_number* v_number_b = new v_number(b);
+	/* TODO: Pass in v_number */v_number v_number_a(a);
+	// /* TODO: Pass in v_number */v_number v_number_b(b);
 
 	//compute
 	if(val_b == 1 && (val_a < -1 || val_a > 1 ))
@@ -554,7 +554,7 @@ std::string V_POWER(const std::string& a,const std::string& b)
 	}
 	else if(val_a == -1)
 	{
-		if(v_number_a->is_negative()) 	// even
+		if(v_number_a.is_negative()) 	// even
 			return "0111";
 		else				//	odd
 			return "1000";

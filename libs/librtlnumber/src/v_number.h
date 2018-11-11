@@ -19,10 +19,7 @@ public:
     //copy another number over
     v_number(v_number& other);
 
-    void value(INT_TYPE);
-
-    INT_TYPE get_value();
-    void set_value(INT_TYPE input);
+    long long value();
 
     //get a single bit from bitstring 
     char bits_from_msb(INT_TYPE index);

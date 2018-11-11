@@ -43,14 +43,9 @@ v_number::v_number(std::string verilog_string)
     this->resize(this->length);
 }
 
-INT_TYPE v_number::get_value()
+long long v_number::value()
 {
     return bits_str_to_int(this->bitstring);
-}
-
-void value(INT_TYPE)
-{
-
 }
 
 char v_number::bits_from_msb(INT_TYPE index)
@@ -115,7 +110,7 @@ std::string v_number::to_bitstring()
     //print in hex
     if(false)
     {
-        std::string out = "";
+        out = "";
         for(int i = 0; i< this->bitstring.size(); i+=4)
         {
             std::string bits_to_hex_str = this->bitstring.substr(i,4);

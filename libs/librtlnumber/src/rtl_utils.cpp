@@ -41,13 +41,13 @@ bool is_string_of_radix(const std::string& input, short radix)
 	}
 }
 
-char _bad_value(const char test, const char *FUNCT, int LINE)	
+char _bad_value(const char test, const char *FUNCT, int LINE)
 {	
 	std::cout << "INVALID BIT INPUT: (" << std::string(1,test) << ")@" << FUNCT << "::" << std::to_string(LINE) << std::endl;	
 	return test; 
 }
 
-std::string _bad_value(const std::string& test, const char *FUNCT, int LINE)	
+std::string _bad_value(const std::string& test, const char *FUNCT, int LINE)
 {	
 	std::cout << "INVALID BIT INPUT: (" << test << ")@" << FUNCT << "::" << std::to_string(LINE) << std::endl;	
 	return test; 
