@@ -91,25 +91,25 @@ INT_TYPE _str_to_int(const std::string& input, short radix, const char *FUNCT, i
 
 char _bits_to_hex(std::string revers, const char *FUNCT, int LINE)
 {
-    if     ( revers == "0000" )             return '0';
-    else if( revers == "0001" )             return '1';
-    else if( revers == "0010" )             return '2';
-    else if( revers == "0011" )             return '3';
-    else if( revers == "0100" )             return '4';
-    else if( revers == "0101" )             return '5';
-    else if( revers == "0110" )             return '6';
-    else if( revers == "0111" )             return '7';
-    else if( revers == "1000" )             return '8';
-    else if( revers == "1001" )             return '9';
-    else if( revers == "1010" )             return 'a';
-    else if( revers == "1011" )             return 'b';
-    else if( revers == "1100" )             return 'c';
-    else if( revers == "1101" )             return 'd';
-    else if( revers == "1110" )             return 'e';
-    else if( revers == "1111" )             return 'f';
-    else if( revers == "xxxx" )             return 'x';
-    else if( revers == "zzzz" )             return 'z';
-    else    _bad_value(revers, FUNCT, LINE);return 'x';
+    if     ( revers == "0000" )              return '0';
+    else if( revers == "0001" )              return '1';
+    else if( revers == "0010" )              return '2';
+    else if( revers == "0011" )              return '3';
+    else if( revers == "0100" )              return '4';
+    else if( revers == "0101" )              return '5';
+    else if( revers == "0110" )              return '6';
+    else if( revers == "0111" )              return '7';
+    else if( revers == "1000" )              return '8';
+    else if( revers == "1001" )              return '9';
+    else if( revers == "1010" )              return 'a';
+    else if( revers == "1011" )              return 'b';
+    else if( revers == "1100" )              return 'c';
+    else if( revers == "1101" )              return 'd';
+    else if( revers == "1110" )              return 'e';
+    else if( revers == "1111" )              return 'f';
+    else if( revers == "xxxx" )              return 'x';
+    else if( revers == "zzzz" )              return 'z';
+    else{    _bad_value(revers, FUNCT, LINE);return 'x';}
 }
 
 #define radix_digit_to_bits_str(num,radix) _radix_digit_to_bits_str(num,radix,__func__, __LINE__)
