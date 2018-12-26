@@ -9,6 +9,24 @@
 #define RTL_UTILS_H
 
 #include <string>
+#include <string.h>
+
+#ifndef DEBUG 
+#define DEBUG 1 // set debug mode
+#endif
+
+#if DEBUG
+#define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+#define DEBUG_MSG(dbgMsg) {\
+    std::cout << "[" << __FILENAME__ << "] DEBUG: " << __func__ << "():" << __LINE__ << " - " << dbgMsg;\
+    }
+#define DEBUG_NEWLINE() {\
+    std::cout << std::endl;\
+    }
+#else
+#define DEBUG_MSG(...)
+#define DEBUG_NEWLINE()
+#endif
 
 typedef size_t INT_TYPE;
 #define DEFAULT_BIT_WIDTH (sizeof(INT_TYPE)*8)

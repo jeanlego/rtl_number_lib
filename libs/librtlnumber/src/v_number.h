@@ -14,7 +14,7 @@ public:
 
     //initialize using an msb to lsb bitstring
     v_number(std::string verilog_string);
-    std::string to_v_string();
+    // TODO: Remove?: std::string to_v_string();
 
     //copy another number over
     v_number(v_number& other);

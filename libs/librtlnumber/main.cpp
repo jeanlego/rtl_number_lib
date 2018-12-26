@@ -33,7 +33,9 @@ inline static std::string _bad_ops(std::string test, const char *FUNCT, int LINE
 static std::string arithmetic(std::string op, std::string a_in)
 {
 	v_number v_number_a(a_in);
-	
+
+	DEBUG_NEWLINE();DEBUG_NEWLINE();DEBUG_MSG("v_number_a: " << v_number_a.to_bitstring());DEBUG_NEWLINE();DEBUG_NEWLINE();
+
 	/* return Process Operator via ternary */
 	v_number v_number_result/* TODO: Get return as v_number itself */(
 							(op == "~")		?		V_BITWISE_NOT(/* TODO: Pass in v_number itself */v_number_a.to_bitstring()):
@@ -56,6 +58,9 @@ static std::string arithmetic(std::string a_in, std::string op, std::string b_in
 {
 	v_number v_number_a(a_in);
 	v_number v_number_b(b_in);
+
+	DEBUG_NEWLINE();DEBUG_NEWLINE();DEBUG_MSG("v_number_a: " << v_number_a.to_bitstring());DEBUG_NEWLINE();
+	DEBUG_MSG("v_number_b: " << v_number_b.to_bitstring());DEBUG_NEWLINE();DEBUG_NEWLINE();
 	
 	/* return Process Operator via ternary */
 	v_number v_number_result/* TODO: Get return as v_number itself */(	/*	Reduction Ops	*/
@@ -100,7 +105,11 @@ static std::string arithmetic(std::string a_in, std::string op1 ,std::string b_i
 	v_number v_number_a(a_in);
 	v_number v_number_b(b_in);
 	v_number v_number_c(c_in);
-	
+
+	DEBUG_NEWLINE();DEBUG_NEWLINE();DEBUG_MSG("v_number_a: " << v_number_a.to_bitstring());DEBUG_NEWLINE();
+	DEBUG_MSG("v_number_b: " << v_number_b.to_bitstring());DEBUG_NEWLINE();
+	DEBUG_MSG("v_number_c: " << v_number_c.to_bitstring());DEBUG_NEWLINE();DEBUG_NEWLINE();
+
 	/* return Process Operator via ternary */
 	v_number v_number_result/* TODO: Get return as v_number itself */(	(op1 != "?")	?	bad_ops(op1):
 							(op2 != ":")	?	bad_ops(op2):
