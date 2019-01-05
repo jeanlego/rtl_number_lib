@@ -167,19 +167,19 @@ static const char l_carry[4][4][4] = {
 	unroll_2d(l_ternary)
 };
 
-#define	_0 0
-#define	_1 1
-#define	_x 2
-#define	_z 3
+// TODO: Remove? Conflicts with libs/librtlnumber/src/InternalBits.hpp: #define	_0 0
+// TODO: Remove? Conflicts with libs/librtlnumber/src/InternalBits.hpp: #define	_1 1
+// TODO: Remove? Conflicts with libs/librtlnumber/src/InternalBits.hpp: #define	_x 2
+// TODO: Remove? Conflicts with libs/librtlnumber/src/InternalBits.hpp: #define	_z 3
 
 inline short _chr2id(const char in, const char *FUNCT, int LINE)
 {
 	switch(std::tolower(in))
 	{
-		case '0':	return _0;
-		case '1':	return _1;
-		case 'x':	return _x;
-		case 'z':	return _z;
+		// TODO: Remove? Conflicts with libs/librtlnumber/src/InternalBits.hpp: case '0':	return _0;
+		// TODO: Remove? Conflicts with libs/librtlnumber/src/InternalBits.hpp: case '1':	return _1;
+		// TODO: Remove? Conflicts with libs/librtlnumber/src/InternalBits.hpp: case 'x':	return _x;
+		// TODO: Remove? Conflicts with libs/librtlnumber/src/InternalBits.hpp: case 'z':	return _z;
 		default:
 			_bad_value(in, FUNCT, LINE);
 			std::abort();
