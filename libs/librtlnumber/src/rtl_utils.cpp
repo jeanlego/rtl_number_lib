@@ -5,7 +5,7 @@
  *             Univerity of New Brunswick in Fredericton, New Brunswick, Canada
  */
 
-#include "rtl_utils.h"
+#include "rtl_utils.hpp"
 #include <algorithm>
 #include <iostream>
 
@@ -80,7 +80,7 @@ void _assert_bits_len_within_limit(const std::string& input, const char *FUNCT, 
 	}
 }
 
-INT_TYPE _str_to_int(const std::string& input, short radix, const char *FUNCT, int LINE)
+long long _str_to_int(const std::string& input, short radix, const char *FUNCT, int LINE)
 {
     _assert_not_dc_string(input, FUNCT, LINE);
 	_assert_string_of_radix(input, radix, FUNCT, LINE);

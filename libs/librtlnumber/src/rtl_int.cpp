@@ -7,10 +7,12 @@
 
 #include <string>
 
-#include "rtl_int.h"
-#include "rtl_utils.h"
-#include "rtl_primitive.h"
-#include "v_number.h"
+#include "rtl_int.hpp"
+#include "rtl_utils.hpp"
+#include "rtl_primitive.hpp"
+#include "v_number.hpp"
+
+using namespace BitSpace;
 
 /**
  * Compare operations
@@ -23,72 +25,65 @@ typedef enum
     UNKNOWN
 }EVAL_RESULT;
 
-inline static EVAL_RESULT eval_op(const std::string& a_in, const std::string& b_in)
+inline static EVAL_RESULT eval_op(VNumber a_in, VNumber b_in)
 {
-	/* TODO: Pass in v_number */v_number v_number_a(a_in);
-	/* TODO: Pass in v_number */v_number v_number_b(b_in);
+	bool neg_a = a_in.is_negative();
+	bool neg_b = (b_in.is_negative());
 
-	bool neg_a = (v_number_a.is_negative());
-	bool neg_b = (v_number_b.is_negative());
-
-	std::string a;
+	VNumber a();
 	if(neg_a)	a = V_MINUS(a_in);
 	else		a = V_ADD(a_in);
 
-	std::string b;
+	VNumber b();
 	if(neg_b)	b = V_MINUS(b_in);
 	else		b = V_ADD(b_in);
 
 	bool invert_result = ((!neg_a && neg_b) || (neg_a && !neg_b));
 
 	int std_length = std::max(a.size(), b.size());
-	/* TODO: Use Same v_number as above */v_number v_number_a_pad(a);
-	/* TODO: Use Same v_number as above */v_number v_number_b_pad(b);
-	const char pad_a = v_number_a_pad.get_padding_bit();
-	const char pad_b = v_number_b_pad.get_padding_bit();
+	const bit_value_t pad_a = a.get_padding_bit();
+	const bit_value_t pad_b = b.get_padding_bit();
 
-	std::string result = "";
+	VNumber result = "";
 
 	for(int i=std_length-1; i >= 0; i--)
 	{
-		char bit_a = pad_a;
+		bit_value_t bit_a = pad_a;
 		if(i < a.size())
 			bit_a = a[i];
 
-		char bit_b = pad_b;
+		bit_value_t bit_b = pad_b;
 		if(i < b.size())
 			bit_b = b[i];
 
-		if (bit_a == '1' && bit_b == '0')	
+		if (bit_a == _1 && bit_b == _0)	
 			return (invert_result)? LESS_THAN: GREATHER_THAN;
 
-		else if	(bit_a == '0' && bit_b == '1')	
+		else if	(bit_a == _0 && bit_b == _1)	
 			return (invert_result)? GREATHER_THAN: LESS_THAN;
 			
-		else if	(bit_a == 'x' || bit_b == 'x')	
+		else if	(bit_a == _x || bit_b == _x)	
 			return UNKNOWN;
 	}
 	return EQUAL;
 }
 
-inline static EVAL_RESULT eval_op(long a, const std::string& b)
+inline static EVAL_RESULT eval_op(long a, VNumber b)
 {
-	std::string bits_value = string_of_radix_to_bitstring(std::to_string(a), 10);
-	std::string BEbits(bits_value.crbegin(),bits_value.crend());
-	return eval_op(BEbits,b);
+	VNumber bits_value = VNumber(std::to_string(a));
+	return eval_op(bits_value,b);
 }
 
-inline static EVAL_RESULT eval_op(const std::string& a,long b)
+inline static EVAL_RESULT eval_op(VNumber a,long b)
 {
-	std::string bits_value = string_of_radix_to_bitstring(std::to_string(b), 10);
-	std::string BEbits(bits_value.crbegin(),bits_value.crend());
-	return eval_op(a, BEbits);
+	VNumber bits_value = VNumber(std::to_string(b));
+	return eval_op(a, bits_value);
 }
 
 /**
  * Not operations
  */
-inline static void not_op(std::string& a)
+inline static void not_op(VNumber& a)
 {
 	for(int i=0; i <a.size(); i++)
 		a[i] = (v_op(l_not,a[i]));
@@ -97,7 +92,7 @@ inline static void not_op(std::string& a)
 /**
  * Unary Reduction operations
  */
-inline static void inline_redux_op(std::string& a, const char lut[4][4])
+inline static void inline_redux_op(VNumber& a, const bit_value_t lut[4][4])
 {
 	if(a.empty())
 		return;
@@ -113,23 +108,21 @@ inline static void inline_redux_op(std::string& a, const char lut[4][4])
 /**
  * Binary Reduction operations
  */
-inline static std::string redux_op(const std::string& a, const std::string& b, const char lut[4][4])
+inline static VNumber redux_op(VNumber a, VNumber b, const bit_value_t lut[4][4])
 {
 	int std_length = std::max(a.size(), b.size());
-	/* TODO: Pass in v_number */v_number v_number_a(a);
-	/* TODO: Pass in v_number */v_number v_number_b(b);
-	const char pad_a = v_number_a.get_padding_bit();
-	const char pad_b = v_number_b.get_padding_bit();
+	const bit_value_t pad_a = a.get_padding_bit();
+	const bit_value_t pad_b = b.get_padding_bit();
 
-	std::string result = "";
+	VNumber result = "";
 
 	for(int i=0; i < std_length; i++)
 	{
-		char bit_a = pad_a;
+		bit_value_t bit_a = pad_a;
 		if(i < a.size())
 			bit_a = a[i];
 
-		char bit_b = pad_b;
+		bit_value_t bit_b = pad_b;
 		if(i < b.size())
 			bit_b = b[i];
 
@@ -142,24 +135,22 @@ inline static std::string redux_op(const std::string& a, const std::string& b, c
 /**
  * Addition operations
  */
-inline static std::string sum_op(const std::string& a, const std::string& b, const char initial_carry)
+inline static VNumber sum_op(VNumber a, VNumber b, const bit_value_t initial_carry)
 {
 	int std_length = std::max(a.size(), b.size());
-	/* TODO: Pass in v_number */v_number v_number_a(a);
-	/* TODO: Pass in v_number */v_number v_number_b(b);
-	const char pad_a = v_number_a.get_padding_bit();
-	const char pad_b = v_number_b.get_padding_bit();
+	const bit_value_t pad_a = a.get_padding_bit();
+	const bit_value_t pad_b = b.get_padding_bit();
 
-	char previous_carry = initial_carry;
-	std::string result = "";
+	bit_value_t previous_carry = initial_carry;
+	VNumber result = "";
 
 	for(int i=0; i < std_length; i++)
 	{
-		char bit_a = pad_a;
+		bit_value_t bit_a = pad_a;
 		if(i < a.size())
 			bit_a = a[i];
 
-		char bit_b = pad_b;
+		bit_value_t bit_b = pad_b;
 		if(i < b.size())
 			bit_b = b[i];
 
@@ -173,10 +164,11 @@ inline static std::string sum_op(const std::string& a, const std::string& b, con
 
 /**
  * Shift operations
+ * TODO change this! doing it inplace wil cause some issue since we cant resize the internal bits, fix one or the other
  */
-inline static void shift_op(std::string& bit_string, long long len, signed char padding_bit)
+inline static void shift_op(VNumber& bit_string, long long len, signed bit_value_t padding_bit)
 {
-	std::string pad(std::abs(len),padding_bit);
+	VNumber pad(std::abs(len),padding_bit);
 	//shift left , let it grow, let it grow ...
 	if(len > 0)	
 	{
@@ -190,12 +182,12 @@ inline static void shift_op(std::string& bit_string, long long len, signed char 
 	}
 }
 
-bool V_TRUE(const std::string& a)
+bool V_TRUE(VNumber a)
 {
 	if(is_dont_care_string(a))
-		return "x";
+		return false;
 
-	return	(eval_op(a,"1") == EQUAL) 			? true : false;
+	return	(eval_op(a,1) == EQUAL) 			? true : false;
 }
 
 /***
@@ -205,72 +197,72 @@ bool V_TRUE(const std::string& a)
  *                                                                        
  */
 
-std::string V_BITWISE_NOT(const std::string& a)
+VNumber V_BITWISE_NOT(VNumber a)
 {
-	std::string result(a);
+	VNumber result(a);
 	not_op(result);
 	return result;
 }
 
-std::string V_ADD(const std::string& a)
+VNumber V_ADD(VNumber a)
 {
-	std::string result(a);
+	VNumber result(a);
 	return result;
 }
 
-std::string V_MINUS(const std::string& a)
+VNumber V_MINUS(VNumber a)
 {
-	return V_MINUS("0", a);
+	return V_MINUS(VNumber("0"), a);
 }
 
-std::string V_BITWISE_AND(const std::string& a)
+VNumber V_BITWISE_AND(VNumber a)
 {
-	std::string result(a);
+	VNumber result(a);
 	inline_redux_op(result, l_and);
 	return result;
 }
 
-std::string V_BITWISE_OR(const std::string& a)
+VNumber V_BITWISE_OR(VNumber a)
 {
-	std::string result(a);
+	VNumber result(a);
 	inline_redux_op(result, l_or);	
 	return result;
 }
 
-std::string V_BITWISE_XOR(const std::string& a)
+VNumber V_BITWISE_XOR(VNumber a)
 {
-	std::string result(a);
+	VNumber result(a);
 	inline_redux_op(result, l_xor);
 	return result;
 }
 
-std::string V_BITWISE_NAND(const std::string& a)
+VNumber V_BITWISE_NAND(VNumber a)
 {
-	std::string result(a);
+	VNumber result(a);
 	inline_redux_op(result, l_and);
 	not_op(result);
 	return result;
 }
 
-std::string V_BITWISE_NOR(const std::string& a)
+VNumber V_BITWISE_NOR(VNumber a)
 {
-	std::string result(a);
+	VNumber result(a);
 	inline_redux_op(result, l_or);
 	not_op(result);
 	return result;
 }
 
-std::string V_BITWISE_XNOR(const std::string& a)
+VNumber V_BITWISE_XNOR(VNumber a)
 {
-	std::string result(a);
+	VNumber result(a);
 	inline_redux_op(result, l_xnor);
 	not_op(result);
 	return result;
 }
 
-std::string V_LOGICAL_NOT(const std::string& a)
+VNumber V_LOGICAL_NOT(VNumber a)
 {
-	std::string result(a);
+	VNumber result(a);
 	inline_redux_op(result, l_or);
 	not_op(result);
 	return result;
@@ -283,206 +275,196 @@ std::string V_LOGICAL_NOT(const std::string& a)
  *                                                                          
  */
 
-std::string V_BITWISE_AND(const std::string& a,const std::string& b)
+VNumber V_BITWISE_AND(VNumber a,VNumber b)
 {
 	return redux_op(a,b,l_and);
 }
 
-std::string V_BITWISE_OR(const std::string& a,const std::string& b)
+VNumber V_BITWISE_OR(VNumber a,VNumber b)
 {
 	return redux_op(a,b,l_or);
 }
 
-std::string V_BITWISE_XOR(const std::string& a,const std::string& b)
+VNumber V_BITWISE_XOR(VNumber a,VNumber b)
 {
 	return redux_op(a,b,l_xor);
 }
 
-std::string V_BITWISE_NAND(const std::string& a,const std::string& b)
+VNumber V_BITWISE_NAND(VNumber a,VNumber b)
 {
 	return redux_op(a,b,l_nand);
 }
 
-std::string V_BITWISE_NOR(const std::string& a,const std::string& b)
+VNumber V_BITWISE_NOR(VNumber a,VNumber b)
 {
 	return redux_op(a,b,l_nor);
 }
 
-std::string V_BITWISE_XNOR(const std::string& a,const std::string& b)
+VNumber V_BITWISE_XNOR(VNumber a,VNumber b)
 {
 	return redux_op(a,b,l_xnor);
 }
 
-std::string V_CASE_EQUAL(const std::string& a,const std::string& b)
+VNumber V_CASE_EQUAL(VNumber a,VNumber b)
 {
 	int std_length = std::max(a.size(), b.size());
-	/* TODO: Pass in v_number */v_number v_number_a(a);
-	/* TODO: Pass in v_number */v_number v_number_b(b);
-	char last_a = v_number_a.get_padding_bit();
-	char last_b = v_number_b.get_padding_bit(); 
+	bit_value_t last_a = a.get_padding_bit();
+	bit_value_t last_b = b.get_padding_bit(); 
 
 	for (int i=0; i<std_length; i++)
 	{
-		char cur_a = last_a;
+		bit_value_t cur_a = last_a;
 		if(i < a.size())
 			cur_a = a[i];
 		
-		char cur_b = last_b;
+		bit_value_t cur_b = last_b;
 		if(i < b.size())
 			cur_b = b[i];
 
-		if(cur_a != cur_b)	return "0";
+		if(cur_a != cur_b)	return VNumber("0");
 	}
 	
-	return "1";
+	return VNumber("1");
 }
-std::string V_CASE_NOT_EQUAL(const std::string& a,const std::string& b)
+VNumber V_CASE_NOT_EQUAL(VNumber a,VNumber b)
 {
 	return V_LOGICAL_NOT(V_CASE_EQUAL(a,b));
 }
 
-std::string V_SIGNED_SHIFT_LEFT(const std::string& a_in, const std::string& b)
+VNumber V_SIGNED_SHIFT_LEFT(VNumber a_in, VNumber b)
 {
 	if(is_dont_care_string(b))	
-		return "x";
+		return ;
 	
-	std::string value(b.crbegin(), b.crend());
-	std::string a(a_in);
+	//TODO this won't work
+	VNumber value(b.crbegin(), b.crend());
+	VNumber a(a_in);
 
-	shift_op(a, bits_str_to_int(value), '0');
+	shift_op(a, bits_str_to_int(value), _0);
 	return a;
 }
 
-std::string V_SHIFT_LEFT(const std::string& a, const std::string& b)
+VNumber V_SHIFT_LEFT(VNumber a, VNumber b)
 {
 	return V_SIGNED_SHIFT_LEFT(a,b);
 }
 
-std::string V_SIGNED_SHIFT_RIGHT(const std::string& a_in, const std::string& b)
+VNumber V_SIGNED_SHIFT_RIGHT(VNumber a_in, VNumber b)
 {
 	if(is_dont_care_string(b))	
-		return "x";
+		return VNumber("x");
 	
-	std::string value(b.crbegin(), b.crend());
-	std::string a(a_in);
+	VNumber a(a_in);
 
-	/* TODO: Pass in v_number */v_number v_number_a(a);
-	// /* TODO: Pass in v_number */v_number v_number_b(b);
-
-	shift_op(a, -1 * bits_str_to_int(value), v_number_a.get_padding_bit());
+	shift_op(a, -1 * b.value(), a_in.get_padding_bit());
 	return a;
 }
 
-std::string V_SHIFT_RIGHT(const std::string& a_in, const std::string& b)
+VNumber V_SHIFT_RIGHT(VNumber a_in, VNumber b)
 {
 	if(is_dont_care_string(b))	
-		return "x";
+		return VNumber("x");
+	
+	VNumber a(a_in);
 
-	std::string value(b.crbegin(), b.crend());
-	std::string a(a_in);
-
-	shift_op(a, -1 * bits_str_to_int(value), '0');
+	shift_op(a, -1 * b.value(), _0);
 	return a;
-
 }
 
 /**
  * Logical Operations
  */
-std::string V_LOGICAL_AND(const std::string& a,const std::string& b)
+VNumber V_LOGICAL_AND(VNumber a,VNumber b)
 {
 	if(is_dont_care_string(a) || is_dont_care_string(b))
-		return "x";
+		return VNumber("x");
 
 	return V_BITWISE_AND(V_BITWISE_OR(a),V_BITWISE_OR(b));
 }
 
-std::string V_LOGICAL_OR(const std::string& a,const std::string& b)
+VNumber V_LOGICAL_OR(VNumber a,VNumber b)
 {
 	if(is_dont_care_string(a) || is_dont_care_string(b))
-		return "x";
+		return VNumber("x");
 
 	return V_BITWISE_OR(V_BITWISE_OR(a),V_BITWISE_OR(b));
 }
 
-std::string V_LT(const std::string& a,const std::string& b)
+VNumber V_LT(VNumber a,VNumber b)
 {
 	if(is_dont_care_string(a) || is_dont_care_string(b))
-		return "x";
+		return VNumber("x");
 
 	return	(eval_op(a,b) == LESS_THAN) 		? "1":"0";
 }
 
-std::string V_GT(const std::string& a,const std::string& b)
+VNumber V_GT(VNumber a,VNumber b)
 {
 	if(is_dont_care_string(a) || is_dont_care_string(b))
-		return "x";
+		return VNumber("x");
 
 	return	(eval_op(a,b) == GREATHER_THAN) 	? "1":"0";
 }
 
-std::string V_LE(const std::string& a,const std::string& b)
+VNumber V_LE(VNumber a,VNumber b)
 {
 	if(is_dont_care_string(a) || is_dont_care_string(b))
-		return "x";
+		return VNumber("x");
 
 	return	(eval_op(a,b) != GREATHER_THAN) 	? "1":"0";
 }
 
-std::string V_GE(const std::string& a,const std::string& b)
+VNumber V_GE(VNumber a,VNumber b)
 {
 	if(is_dont_care_string(a) || is_dont_care_string(b))
-		return "x";
+		return VNumber("x");
 
 	return	(eval_op(a,b) != LESS_THAN) 		? "1":"0";
 }
 
-std::string V_EQUAL(const std::string& a,const std::string& b)
+VNumber V_EQUAL(VNumber a,VNumber b)
 {
 	if(is_dont_care_string(a) || is_dont_care_string(b))
-		return "x";
+		return VNumber("x");
 
 	return	(eval_op(a,b) == EQUAL) 			? "1":"0";
 }
 
-std::string V_NOT_EQUAL(const std::string& a,const std::string& b)
+VNumber V_NOT_EQUAL(VNumber a,VNumber b)
 {
 	if(is_dont_care_string(a) || is_dont_care_string(b))
-		return "x";
+		return VNumber("x");
 
 	return	(eval_op(a,b) != EQUAL) 			? "1":"0";
 }
 
-std::string V_ADD(const std::string& a, const std::string& b)
+VNumber V_ADD(VNumber a, VNumber b)
 {
 	if(is_dont_care_string(a) || is_dont_care_string(b))
-		return "x";
+		return VNumber("x");
 
-	return sum_op(a, b, '0');
+	return sum_op(a, b, _0);
 }
 
-std::string V_MINUS(const std::string& a,const std::string& b)
+VNumber V_MINUS(VNumber a,VNumber b)
 {
 	if(is_dont_care_string(a) || is_dont_care_string(b))
-		return "x";
+		return VNumber("x");
 
-	return sum_op(a, V_BITWISE_NOT(b), '1');
+	return sum_op(a, V_BITWISE_NOT(b), _1);
 
 }
 
-std::string V_MULTIPLY(const std::string& a_in, const std::string& b_in)
+VNumber V_MULTIPLY(VNumber a_in, VNumber b_in)
 {
 	if(is_dont_care_string(a_in) || is_dont_care_string(b_in))
-		return "x";
+		return VNumber("x");
 
-	std::string a;
-	std::string b;
+	VNumber a;
+	VNumber b;
 
-	/* TODO: Pass in v_number */v_number v_number_a(a_in);
-	/* TODO: Pass in v_number */v_number v_number_b(b_in);
-
-	bool neg_a = v_number_a.is_negative();
-	bool neg_b = v_number_b.is_negative();
+	bool neg_a = a_in.is_negative();
+	bool neg_b = b_in.is_negative();
 	
 	if(neg_a)	
 		a = V_MINUS(a_in);
@@ -496,15 +478,16 @@ std::string V_MULTIPLY(const std::string& a_in, const std::string& b_in)
 		
 	bool invert_result = ((!neg_a && neg_b) || (neg_a && !neg_b));
 
-	std::string result = "0";
-	std::string b_copy = b;
+	//TODO this won't work
+	VNumber result("0");
+	VNumber b_copy = b;
 
 	for(int i=0; i< a.size(); i++)
 	{
-		char bit_a = a[i];
-		if(bit_a == '1')
+		bit_value_t bit_a = a[i];
+		if(bit_a == _1)
 			result = V_ADD(result,b);
-		shift_op(b_copy, 1, '0');
+		shift_op(b_copy, 1, _0);
 	}
 
 	if(invert_result)	
@@ -513,10 +496,10 @@ std::string V_MULTIPLY(const std::string& a_in, const std::string& b_in)
 	return result;
 }
 
-std::string V_POWER(const std::string& a,const std::string& b)
+VNumber V_POWER(VNumber a,VNumber b)
 {
 	if(is_dont_care_string(a) || is_dont_care_string(b))
-		return "xxxx";
+		return VNumber("xxxx");
 	
 	EVAL_RESULT res_a = eval_op(a, 0);
 	short val_a = 	(res_a == EQUAL) 			? 	0: 
@@ -531,60 +514,64 @@ std::string V_POWER(const std::string& a,const std::string& b)
 	/* TODO: Pass in v_number */v_number v_number_a(a);
 	// /* TODO: Pass in v_number */v_number v_number_b(b);
 
+	//TODO this won't work
+
 	//compute
 	if(val_b == 1 && (val_a < -1 || val_a > 1 ))
 	{
-		std::string result = "1";
+		VNumber result("1");
 		
-		std::string tmp_b = b;
+		VNumber tmp_b = b;
 		while(eval_op(tmp_b,0) == GREATHER_THAN)
 		{
-			tmp_b = V_MINUS(tmp_b,"1");
+			tmp_b = V_MINUS(tmp_b,VNumber("1"));
 			result = V_MULTIPLY( result, a);
 		}
 		return result;
 	}
 	if (val_b == 0 || val_a == 1)	
 	{
-		return "1000";
+		return VNumber("1000");
 	}
 	else if(val_b == -1 && val_a == 0)
 	{
-		return "xxxx";
+		return VNumber("xxxx");
 	}
 	else if(val_a == -1)
 	{
 		if(v_number_a.is_negative()) 	// even
-			return "0111";
+			return VNumber("0111");
 		else				//	odd
-			return "1000";
+			return VNumber("1000");
 	}
 	else	
 	{
-		return "0000";
+		return VNumber("0000");
 	}
 }
 
-std::string V_DIV(const std::string& a_in,const std::string& b)
+//TODO this won't work
+/////////////////////////////
+VNumber V_DIV(VNumber a,VNumber b)
 {
-	std::string a(a_in);
+	VNumber a(a_in);
 	if(is_dont_care_string(a) || is_dont_care_string(b)
 	|| eval_op(b,0) == EQUAL)
-		return "x";
+		return VNumber("x");
 
 	
-	std::string result = "0";
+	VNumber result("0");
 	//TODO signed division!
 	while(eval_op(a, b) == GREATHER_THAN )
 	{
-		std::string  count = "1";
-		std::string  sub_with = b;
-		std::string  tmp = b;
+		VNumber  count("1");
+		VNumber  sub_with = b;
+		VNumber  tmp = b;
 		while(eval_op(tmp, a) == LESS_THAN)
 		{
 			sub_with = tmp;
-			shift_op(count, 1,'0');
-			shift_op(tmp, 1,'0');
+			shift_op(count, 1,_0);
+			shift_op(tmp, 1,_0);
 		}
 		a = V_MINUS(a, sub_with);
 		result = V_ADD(result, count);
@@ -592,19 +579,19 @@ std::string V_DIV(const std::string& a_in,const std::string& b)
 	return result;
 }
 
-std::string V_MOD(const std::string& a_in,const std::string& b)
+VNumber V_MOD(VNumber a,VNumber b)
 {
-	std::string a(a_in);
+	VNumber a(a_in);
 
 	if(is_dont_care_string(a) || is_dont_care_string(b)
 	|| eval_op(b, 0) == EQUAL)
-		return "x";
+		return VNumber("x");
 
 	//TODO signed division!
 	while(eval_op(b, a)  == LESS_THAN)
 	{
-		std::string  sub_with = b;
-		for( std::string  tmp = b; eval_op(tmp, a) == LESS_THAN; shift_op(tmp, 1,'0'))
+		VNumber  sub_with = b;
+		for( VNumber  tmp = b; eval_op(tmp, a) == LESS_THAN; shift_op(tmp, 1,_0))
 		{
 			sub_with = tmp;
 		}
@@ -619,7 +606,7 @@ std::string V_MOD(const std::string& a_in,const std::string& b)
  *     |  |___ |  \ | \| /~~\ |  \  |     \__/ |    |___ |  \ /~~\  |  | \__/ | \| 
  *                                                                                 
 */
-std::string V_TERNARY(const std::string& a, const std::string& b, const std::string& c)
+VNumber V_TERNARY(VNumber a, VNumber b, VNumber c)
 {
 	/*	if a evaluates properly	*/
 	EVAL_RESULT eval = eval_op(V_LOGICAL_NOT(a),0);

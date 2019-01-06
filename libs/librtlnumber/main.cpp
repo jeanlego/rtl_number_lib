@@ -10,9 +10,9 @@
 #include <string>
 #include <algorithm>
 
-#include "v_number.h"
-#include "rtl_int.h"
-#include "rtl_utils.h"
+#include "v_number.hpp"
+#include "rtl_int.hpp"
+#include "rtl_utils.hpp"
 
 #define bad_ops(test) _bad_ops(test, __func__, __LINE__)
 inline static std::string _bad_ops(std::string test, const char *FUNCT, int LINE)	

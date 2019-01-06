@@ -10,13 +10,12 @@
 
 #include <string>
 
-typedef size_t INT_TYPE;
-#define DEFAULT_BIT_WIDTH (sizeof(INT_TYPE)*8)
+#define DEFAULT_BIT_WIDTH (sizeof(long long)*8)
 
 #define bits_str_to_int(num) _str_to_int(num,2,__func__, __LINE__)
 #define dec_str_to_int(num) _str_to_int(num,10,__func__, __LINE__)
 
-INT_TYPE _str_to_int(const std::string& input, short radix, const char *FUNCT, int LINE);
+long long _str_to_int(const std::string& input, short radix, const char *FUNCT, int LINE);
 
 std::string string_of_radix_to_bitstring(std::string orig_string, short radix);
 
